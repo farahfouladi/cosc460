@@ -95,14 +95,13 @@ public class Tuple implements Serializable {
     public String toString() {
         int i;
         int n = this.desc.numFields();
-        String s = "<p/>";
+        String s = "";
         for (i=0;i<n;i++) {
         	s += fields[i];
-        	if (i<i-1) {
+        	if (i<n-1) {
         		s+="\t";
         	}
         }
-        s+="<p/>";
         return s;
     }
 

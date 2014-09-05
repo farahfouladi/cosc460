@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.io.*;
-
+import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,16 +29,17 @@ public class BufferPool {
      * constructor instead.
      */
     public static final int DEFAULT_PAGES = 50;
-
+    public static Hashtable<PageId, Page> bpool;
+    public static Page[] bp_pages;
+   
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    private int pages;
-    
     public BufferPool(int numPages) {
-        this.pages = numPages;
+        //bp_pages = new Page[numPages]; -- didn't use numPages...
+        bpool = new Hashtable<PageId, Page>();
     }
 
     public static int getPageSize() {
@@ -67,9 +68,22 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+       
+        Page page;
+        if(bpool.containsKey(pid)){
+            page = bpool.get(pid);
+        }
+       
+        else {
+            int tableid = pid.getTableId();
+            DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
+            page = dbFile.readPage(pid);
+            bpool.put(pid, page);
+        }
+       
+        return page;
     }
+
 
     /**
      * Releases the lock on a page.

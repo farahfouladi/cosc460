@@ -45,8 +45,6 @@ public class TupleDesc implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    //private String[] fieldArray;
-    //private Type[] typeArray;
     private TDItem[] items;
     
     /**
@@ -64,18 +62,10 @@ public class TupleDesc implements Serializable {
         if (num > 0) {
         	items = new TDItem[num];
         	for (int i=0;i<num;i++) {
-        		//this.typeArray[i] = typeAr[i];
         		item = new TDItem(typeAr[i], fieldAr[i]);
         		items[i] = item;
         	}
         }
-        //int n = fieldAr.length;
-        //if (n>0) {
-        //	fieldArray = new String[n];
-        //	for (int k=0;k<n;k++) {
-        //	this.fieldArray[k] = fieldAr[k];
-        //	}
-        //}
     }
 
     /**
@@ -92,7 +82,6 @@ public class TupleDesc implements Serializable {
         if (num > 0) {
         	items = new TDItem[num];
         	for (int i=0;i<num;i++) {
-        		//this.typeArray[i] = typeAr[i];
         		item = new TDItem(typeAr[i], null);
         		items[i] = item;
         	}

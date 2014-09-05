@@ -41,6 +41,7 @@ public class Catalog {
      *                  conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
+    	//adding all elements to the end of the list
         tables.add(file);
         names.add(name);
         keys.add(pkeyField);
@@ -141,18 +142,65 @@ public class Catalog {
     }
 
     public String getPrimaryKey(int tableid) {
-        // some code goes here
-        return null;
+        int i;
+        int size = tables.size();
+        int index = -1;
+    	DbFile file = null;
+    	String pkey;
+        if (size==0) {
+        	throw new NoSuchElementException();
+        }
+        try {
+        	for (i=0;i<size;i++) {
+        		file = tables.get(i);
+        		if (file.getId() == tableid) {
+        			index = i;
+        			break;
+        		}
+        	}
+        	pkey = keys.get(index);
+        }
+        catch(Exception e) {
+        	throw new NoSuchElementException();
+        }
+        return pkey;
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        Integer tableIds[] = new Integer[tables.size()];
+        int i;
+        for (i=0; i<tables.size(); i++) {
+        	DbFile file = tables.get(i);
+        	int id = file.getId();
+        	tableIds[i] = (Integer) id;
+        }
+        Iterator<Integer> it = Arrays.asList(tableIds).iterator();
+        return it;
     }
 
     public String getTableName(int id) {
-        // some code goes here
-        return null;
+        int i;
+        int size = tables.size();
+        int index = -1;
+    	DbFile file = null;
+    	String name;
+        if (size==0) {
+        	throw new NoSuchElementException();
+        }
+        try {
+        	for (i=0;i<size;i++) {
+        		file = tables.get(i);
+        		if (file.getId() == id) {
+        			index = i;
+        			break;
+        		}
+        	}
+        	name = names.get(index);
+        }
+        catch(Exception e) {
+        	throw new NoSuchElementException();
+        }
+        return name;
     }
 
     /**
