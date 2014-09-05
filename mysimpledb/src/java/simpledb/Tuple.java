@@ -93,8 +93,17 @@ public class Tuple implements Serializable {
      * where \t is any whitespace, except newline
      */
     public String toString() {
-        // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        int i;
+        int n = this.desc.numFields();
+        String s = "<p/>";
+        for (i=0;i<n;i++) {
+        	s += fields[i];
+        	if (i<i-1) {
+        		s+="\t";
+        	}
+        }
+        s+="<p/>";
+        return s;
     }
 
 }

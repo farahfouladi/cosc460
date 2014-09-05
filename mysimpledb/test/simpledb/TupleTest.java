@@ -52,6 +52,7 @@ public class TupleTest extends SimpleDbTestBase {
         tup.setField(1, new IntField(99));
         tup.setField(2, new IntField(42));
         String tupStr = tup.toString();
+
         assertArrayEquals(new String[]{"170", "99", "42"}, tupStr.split("\\s+"));
     }
 
