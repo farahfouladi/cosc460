@@ -12,7 +12,10 @@ import java.util.Iterator;
 public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
+    
+    private TupleDesc desc;
+    private RecordId rId;
+    private Field[] fields;
     /**
      * Create a new tuple with the specified schema (type).
      *
@@ -20,15 +23,17 @@ public class Tuple implements Serializable {
      *           instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-        // some code goes here
+    	if (td.numFields() > 0) {
+    		this.desc = td;
+    		fields = new Field[td.numFields()];
+    	}
     }
 
     /**
      * @return The TupleDesc representing the schema of this tuple.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return this.desc;
     }
 
     /**
@@ -36,8 +41,7 @@ public class Tuple implements Serializable {
      * be null.
      */
     public RecordId getRecordId() {
-        // some code goes here
-        return null;
+        return this.rId;
     }
 
     /**
@@ -46,7 +50,7 @@ public class Tuple implements Serializable {
      * @param rid the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-        // some code goes here
+        this.rId = rid;
     }
 
     /**
@@ -56,7 +60,17 @@ public class Tuple implements Serializable {
      * @param f new value for the field.
      */
     public void setField(int i, Field f) {
-        // some code goes here
+        if (i < this.desc.numFields()) {
+        	if (f instanceof IntField && this.desc.getFieldType(i).getLen()==4) {
+        		fields[i] = f;
+        	}
+        	else if (f instanceof StringField && this.desc.getFieldType(i).getLen()>4) {
+        		fields[i] = f;
+        	}
+        	else {
+        		throw new RuntimeException();
+        	}
+        }
     }
 
     /**
@@ -64,7 +78,9 @@ public class Tuple implements Serializable {
      * @return the value of the ith field, or null if it has not been set.
      */
     public Field getField(int i) {
-        // some code goes here
+        if (i < this.desc.numFields()) {
+        	return fields[i];
+        }
         return null;
     }
 

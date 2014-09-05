@@ -23,14 +23,16 @@ public class TupleDescTest extends SimpleDbTestBase {
 
         td1 = Utility.getTupleDesc(1, "td1");
         td2 = Utility.getTupleDesc(2, "td2");
-
         // test td1.combine(td2)
         td3 = TupleDesc.merge(td1, td2);
+        System.out.println(td3.getFieldName(0));
         assertEquals(3, td3.numFields());
         assertEquals(3 * Type.INT_TYPE.getLen(), td3.getSize());
         for (int i = 0; i < 3; ++i)
             assertEquals(Type.INT_TYPE, td3.getFieldType(i));
+
         assertEquals(combinedStringArrays(td1, td2, td3), true);
+
 
         // test td2.combine(td1)
         td3 = TupleDesc.merge(td2, td1);
