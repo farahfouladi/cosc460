@@ -35,8 +35,10 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
+    private int pages;
+    
     public BufferPool(int numPages) {
-        // some code goes here
+        this.pages = numPages;
     }
 
     public static int getPageSize() {
