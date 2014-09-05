@@ -29,6 +29,14 @@ public class TupleDesc implements Serializable {
             this.fieldName = n;
             this.fieldType = t;
         }
+        
+        public String getName() {
+        	return this.fieldName;
+        }
+        
+        public Type getType() {
+        	return this.fieldType;
+        }
 
         public String toString() {
             return fieldName + "(" + fieldType + ")";
@@ -37,8 +45,9 @@ public class TupleDesc implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String[] fieldArray;
-    private Type[] typeArray;
+    //private String[] fieldArray;
+    //private Type[] typeArray;
+    private TDItem[] items;
     
     /**
      * Create a new TupleDesc with typeAr.length fields with fields of the
@@ -51,19 +60,22 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         int num = typeAr.length;
+        TDItem item;
         if (num > 0) {
-        	typeArray = new Type[num];
+        	items = new TDItem[num];
         	for (int i=0;i<num;i++) {
-        		this.typeArray[i] = typeAr[i];
+        		//this.typeArray[i] = typeAr[i];
+        		item = new TDItem(typeAr[i], fieldAr[i]);
+        		items[i] = item;
         	}
         }
-        int n = fieldAr.length;
-        if (n>0) {
-        	fieldArray = new String[n];
-        	for (int k=0;k<n;k++) {
-        	this.fieldArray[k] = fieldAr[k];
-        	}
-        }
+        //int n = fieldAr.length;
+        //if (n>0) {
+        //	fieldArray = new String[n];
+        //	for (int k=0;k<n;k++) {
+        //	this.fieldArray[k] = fieldAr[k];
+        //	}
+        //}
     }
 
     /**
@@ -76,10 +88,13 @@ public class TupleDesc implements Serializable {
     public TupleDesc(Type[] typeAr) {
         int num = 0;
         num = typeAr.length;
+        TDItem item;
         if (num > 0) {
-        	typeArray = new Type[num];
+        	items = new TDItem[num];
         	for (int i=0;i<num;i++) {
-        		this.typeArray[i] = typeAr[i];
+        		//this.typeArray[i] = typeAr[i];
+        		item = new TDItem(typeAr[i], null);
+        		items[i] = item;
         	}
         }
     }
@@ -88,7 +103,7 @@ public class TupleDesc implements Serializable {
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        return this.typeArray.length;
+        return this.items.length;
     }
 
     /**
@@ -100,11 +115,11 @@ public class TupleDesc implements Serializable {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         String name = null;
-        if (this.fieldArray == null) {
+        if (this.items == null) {
         	return null;
         }
     	try {
-        	name = this.fieldArray[i];
+        	name = this.items[i].getName();
         }
         catch (IndexOutOfBoundsException e) {
         	throw new NoSuchElementException();
@@ -124,7 +139,7 @@ public class TupleDesc implements Serializable {
     public Type getFieldType(int i) throws NoSuchElementException {
         Type t = null;
         try {
-        	t = this.typeArray[i];
+        	t = this.items[i].getType();
         }
         catch (IndexOutOfBoundsException e) {
         	throw new NoSuchElementException();
@@ -147,11 +162,11 @@ public class TupleDesc implements Serializable {
         if (name == null) {
         	throw new NoSuchElementException();
         }
-        if (this.fieldArray == null) {
+        if (this.items == null) {
         	throw new NoSuchElementException();
         }
         for (k=0;k<num;k++) {
-        	if (this.fieldArray[k] != null && name.equals(this.fieldArray[k])) {
+        	if (this.items[k].getName() != null && name.equals(this.items[k].getName())) {
         		index = k;
         		flag = true;
         		break;
@@ -172,7 +187,7 @@ public class TupleDesc implements Serializable {
         int size = 0;
         int num = this.numFields();
         for (i=0;i<num;i++) {
-        	size += this.typeArray[i].getLen();
+        	size += this.items[i].getType().getLen();
         }
         return size;
     }
@@ -264,7 +279,8 @@ public class TupleDesc implements Serializable {
      * that are included in this TupleDesc
      */
     public Iterator<TDItem> iterator() { 
-        return null;
+    	Iterator<TDItem> i = Arrays.asList(items).iterator();
+        return i;
     }
 
 }
