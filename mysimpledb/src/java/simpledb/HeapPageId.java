@@ -43,7 +43,7 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         return Integer.parseInt(Integer.toString(tableId) + Integer.toString(pgNo));
-        throw new UnsupportedOperationException("implement this");
+        //throw new UnsupportedOperationException("implement this");
     }
 
     /**
@@ -54,8 +54,14 @@ public class HeapPageId implements PageId {
      * ids are the same)
      */
     public boolean equals(Object o) {
-        int other_tableId = o.getTableId();
-        int other_pgNo = o.pageNumber();
+    	if (o == null) {
+    		return false;
+    	}
+    	if (!(o instanceof HeapPageId)) {
+    		return false;
+    	}
+        int other_tableId = ((HeapPageId) o).getTableId();
+        int other_pgNo = ((HeapPageId) o).pageNumber();
         if (this.tableId == other_tableId && this.pgNo == other_pgNo) {
         	return true;
         }
