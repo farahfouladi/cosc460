@@ -3,6 +3,8 @@ package simpledb;
 import java.util.*;
 import java.io.*;
 
+import simpledb.TupleDesc.TDItem;
+
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and
  * implements the Page interface that is used by BufferPool.
@@ -68,8 +70,8 @@ public class HeapPage implements Page {
      * @return the number of tuples on this page
      */
     private int getNumTuples() {
-        // some code goes here
-        return 0;
+        double numTups = Math.floor(((BufferPool.PAGE_SIZE)*8) / (td.getSize()* 8 + 1));
+        return (int) numTups;
 
     }
 
@@ -79,9 +81,8 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {
-
-        // some code goes here
-        return 0;
+    	double headSize = Math.ceil(this.getNumTuples()/8);
+    	return (int) headSize;
 
     }
 
@@ -114,8 +115,7 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return this.pid;
     }
 
     /**
@@ -311,9 +311,8 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        // some code goes here
-        return null;
+    	Iterator<Tuple> i = Arrays.asList(tuples).iterator();
+    	return i;
     }
-
 }
 
