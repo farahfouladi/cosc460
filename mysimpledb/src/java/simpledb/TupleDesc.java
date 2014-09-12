@@ -45,7 +45,7 @@ public class TupleDesc implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private TDItem[] items;
+    private static TDItem[] items;
     
     /**
      * Create a new TupleDesc with typeAr.length fields with fields of the
@@ -267,7 +267,7 @@ public class TupleDesc implements Serializable {
      * @return An iterator which iterates over all the field TDItems
      * that are included in this TupleDesc
      */
-    public Iterator<TDItem> iterator() { 
+    public static Iterator<TDItem> iterator() { 
     	Iterator<TDItem> i = Arrays.asList(items).iterator();
         return i;
     }
