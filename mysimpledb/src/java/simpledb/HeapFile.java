@@ -21,6 +21,7 @@ public class HeapFile implements DbFile {
 
 	private File f;
 	private TupleDesc td;
+	//private HeapPage[] hp;
     /**
      * Constructs a heap file backed by the specified file.
      *
@@ -65,6 +66,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
+    	int pgNo = pid.pageNumber(); 
         byte[] b = new byte[(int) f.length()];
         ByteOutputStream ous = new ByteOutputStream();
         FileInputStream fis;
@@ -72,6 +74,7 @@ public class HeapFile implements DbFile {
         Page pg;
         try {
 			fis = new FileInputStream(f);
+			fis.skip( (pgNo)*BufferPool.getPageSize() );
 			while ( (read = fis.read(b)) != -1){
 				ous.write(b,0,read);
 			}
@@ -94,8 +97,9 @@ public class HeapFile implements DbFile {
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        // some code goes here
-        return 0;
+        int fileSize = (int)f.length();
+        int pageSize = BufferPool.PAGE_SIZE;
+        return (int)Math.ceil(pageSize/fileSize);
     }
 
     // see DbFile.java for javadocs
@@ -116,7 +120,24 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        // some code goes here
+        Permissions perm = null;
+        int numPages = this.numPages();
+        int i;
+        BufferPool bp = Database.getBufferPool();
+        Page page;
+        ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+        try {
+        	for (i=0;i<numPages;i++) {
+        		HeapPageId hpId = new HeapPageId(this.getId(), i);
+        		page = bp.getPage(tid, hpId, perm);
+        		// use iterator
+        	}
+    	}
+        catch(Exception e) {
+        	
+        }
+        
+        
         return null;
     }
 
