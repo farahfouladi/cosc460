@@ -21,7 +21,6 @@ public class HeapFile implements DbFile {
 
 	private File f;
 	private TupleDesc td;
-	//private HeapPage[] hp;
     /**
      * Constructs a heap file backed by the specified file.
      *
@@ -67,7 +66,7 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
     	int pgNo = pid.pageNumber(); 
-        byte[] b = new byte[(int) f.length()];
+        byte[] b = new byte[BufferPool.getPageSize()];
         ByteOutputStream ous = new ByteOutputStream();
         FileInputStream fis;
         int read = 0;
@@ -75,7 +74,7 @@ public class HeapFile implements DbFile {
         try {
 			fis = new FileInputStream(f);
 			fis.skip( (pgNo)*BufferPool.getPageSize() );
-			while ( (read = fis.read(b)) != -1){
+			while ( (read = fis.read(b)) != -1){ //reads up to b.length bytes of data from the input stream
 				ous.write(b,0,read);
 			}
 	    ous.close();
@@ -120,25 +119,98 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        Permissions perm = null;
-        int numPages = this.numPages();
-        int i;
-        BufferPool bp = Database.getBufferPool();
-        Page page;
-        ArrayList<Tuple> tuples = new ArrayList<Tuple>();
-        try {
-        	for (i=0;i<numPages;i++) {
-        		HeapPageId hpId = new HeapPageId(this.getId(), i);
-        		page = bp.getPage(tid, hpId, perm);
-        		// use iterator
-        	}
+    	DbFileIterator dbItr = new HeapFileIterator(tid);
+    	try {
+			dbItr.open();
+		} catch (DbException e) {
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
+		}
+        return dbItr;
+    }
+    
+    class HeapFileIterator implements DbFileIterator {
+    	
+    	private int pgNo;
+    	private TransactionId tid;
+    	private Iterator<Tuple> tupItr;
+    	private HeapPage cur_page;
+    	BufferPool bp;
+    	
+    	public HeapFileIterator(TransactionId tid) {
+			// assume starting at first 
+			pgNo = 0;
+			bp = Database.getBufferPool();
+			this.tid = tid;
     	}
-        catch(Exception e) {
-        	
-        }
-        
-        
-        return null;
+
+		@Override
+		public void open() throws DbException, TransactionAbortedException {
+			Page page;
+			Permissions perm = null;
+			try {
+        		HeapPageId hpId = new HeapPageId(getId(), pgNo);
+        		System.out.println(hpId.getTableId());
+        		System.out.println(hpId.pageNumber());
+        		page = bp.getPage(tid, hpId, perm);
+        		System.out.println("do I get here?");
+        		tupItr = ((HeapPage)page).iterator();
+
+			}
+			catch(Exception e) {
+				System.out.println("HERE");
+			}
+		}
+
+		@Override
+		public boolean hasNext() throws DbException,
+				TransactionAbortedException {
+			if (tupItr.hasNext()) {
+				return true;
+			}
+			else if (pgNo < numPages()-1) {
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public Tuple next() throws DbException, TransactionAbortedException,
+				NoSuchElementException {
+			Permissions perm = null;
+			if (tupItr.hasNext()) {
+				return tupItr.next();
+			}
+			else if (pgNo < numPages()-1) {
+				this.pgNo = pgNo+1; // go to the nest page
+				try {
+	        		HeapPageId hpId = new HeapPageId(getId(), pgNo);
+	        		Page page = bp.getPage(tid, hpId, perm);
+	        		tupItr = ((HeapPage)page).iterator();
+	    			if (tupItr.hasNext()) {
+	    				return tupItr.next();
+	    			}
+				}
+				catch(Exception e) {
+				}
+				
+			}
+			return null;
+		}
+
+		@Override
+		public void rewind() throws DbException, TransactionAbortedException {
+			this.pgNo = 0;
+			
+		}
+
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+    	
     }
 
 }
