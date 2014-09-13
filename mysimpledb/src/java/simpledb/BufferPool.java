@@ -68,13 +68,15 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
-       
+        System.out.println("I am getting a page");
         Page page;
+        // code not executing the if or else ?
         if(bpool.containsKey(pid)){
+        	System.out.println("page already in table");
             page = bpool.get(pid);
         }
-       
         else {
+        	System.out.println("adding entry in table");
             int tableid = pid.getTableId();
             DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
             page = dbFile.readPage(pid);

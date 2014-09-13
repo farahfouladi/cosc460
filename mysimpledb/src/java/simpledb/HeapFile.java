@@ -136,13 +136,15 @@ public class HeapFile implements DbFile {
     	private TransactionId tid;
     	private Iterator<Tuple> tupItr;
     	private HeapPage cur_page;
-    	BufferPool bp;
+    	private BufferPool bp;
+    	private HeapPageId hpId;
     	
     	public HeapFileIterator(TransactionId tid) {
-			// assume starting at first 
+			// assume starting at first page
 			pgNo = 0;
 			bp = Database.getBufferPool();
 			this.tid = tid;
+			hpId = new HeapPageId(getId(), pgNo);
     	}
 
 		@Override
@@ -150,7 +152,6 @@ public class HeapFile implements DbFile {
 			Page page;
 			Permissions perm = null;
 			try {
-        		HeapPageId hpId = new HeapPageId(getId(), pgNo);
         		System.out.println(hpId.getTableId());
         		System.out.println(hpId.pageNumber());
         		page = bp.getPage(tid, hpId, perm);
