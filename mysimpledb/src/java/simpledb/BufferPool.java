@@ -29,8 +29,8 @@ public class BufferPool {
      * constructor instead.
      */
     public static final int DEFAULT_PAGES = 50;
-    public static Hashtable<PageId, Page> bpool;
-    public static Page[] bp_pages;
+    private Hashtable<PageId, Page> bpool;
+    private int numPages;
    
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -40,6 +40,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         //bp_pages = new Page[numPages]; -- didn't use numPages...
         bpool = new Hashtable<PageId, Page>();
+        this.numPages = numPages;
     }
 
     public static int getPageSize() {
@@ -68,19 +69,16 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
-       
-        Page page;
+        Page page = null;
         if(bpool.containsKey(pid)){
             page = bpool.get(pid);
         }
-       
         else {
             int tableid = pid.getTableId();
             DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
             page = dbFile.readPage(pid);
             bpool.put(pid, page);
         }
-       
         return page;
     }
 
