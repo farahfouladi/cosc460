@@ -60,6 +60,7 @@ public class HeapFile implements DbFile {
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc() {
+    	System.out.println("HERE?");
         return td;
     }
 
@@ -142,15 +143,16 @@ public class HeapFile implements DbFile {
 
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
+			System.out.println("opening HeapFileIterator");
 			HeapPage page;
 			Permissions perm = null; // what are the permissions = problem??
 			try {
-        		page = (HeapPage) bp.getPage(tid, hpId, perm);
-        		tupItr = new TupleIterator(td, page);
-        		tupItr.open();
+				page = (HeapPage) bp.getPage(tid, hpId, perm);
+				tupItr = new TupleIterator(td, page);
+				tupItr.open();
 			}
 			catch(Exception e) {
-				
+			
 			}
 		}
 

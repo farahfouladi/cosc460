@@ -72,29 +72,22 @@ public class SeqScan implements DbIterator {
      * prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-    	TupleDesc td = Database.getCatalog().getTupleDesc(this.tableid);
+    	System.out.println("Table Id = " + this.tableid);
+    	DbFile file = Database.getCatalog().getDatabaseFile(tableid);
+    	TupleDesc td = file.getTupleDesc();
     	String alias = getAlias();
-    	Iterator<TDItem> i = td.iterator();
-    	
-    	ArrayList <Type> typeAr = new ArrayList <Type>();
-    	ArrayList <String> fieldAr = new ArrayList <String>();
-    	
-    	while(i.hasNext()) {
-    		TDItem item = i.next();
-    		String fieldName = item.fieldName;
-    		Type fieldType = item.fieldType;
-    		if(fieldName == null) {
-    			fieldName = "null";
-    		}
-    		fieldName = alias + "." + fieldName;
-    		typeAr.add(fieldType);
-    		fieldAr.add(fieldName);
+    	int numTuples = td.numFields();
+    	System.out.println("NUM FIELDS TAODAY " + numTuples);
+    	System.out.println(numTuples);
+    	int k;
+    	Type[] types = new Type[numTuples];
+    	String[] names = new String[numTuples];
+    	for (k=0;k<numTuples;k++) {
+    		System.out.println(names[k]);
+    		types[k] = td.getFieldType(k);
+    		names[k] = alias + "." + td.getFieldName(k);
     	}
-    	
-    	Type[] newTdTypeAr = (Type[]) typeAr.toArray(new Type[0]);
-    	String[] newTdFieldAr = (String[]) fieldAr.toArray(new String[0]);
-    	
-    	TupleDesc newTd = new TupleDesc(newTdTypeAr, newTdFieldAr);
+    	TupleDesc newTd = new TupleDesc(types,names); 
         return newTd;
     }
 
