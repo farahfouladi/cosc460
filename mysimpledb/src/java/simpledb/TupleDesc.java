@@ -45,7 +45,7 @@ public class TupleDesc implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static TDItem[] items;
+    private TDItem[] items;
     
     /**
      * Create a new TupleDesc with typeAr.length fields with fields of the
@@ -57,7 +57,9 @@ public class TupleDesc implements Serializable {
      *                be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
+    	System.out.println("making tuple desc");
         int num = typeAr.length;
+        System.out.println("TD: num = " + num);
         TDItem item;
         if (num > 0) {
         	items = new TDItem[num];
@@ -165,6 +167,7 @@ public class TupleDesc implements Serializable {
         	throw new NoSuchElementException();
         }
 		return index;
+
     }
 
     /**
@@ -268,8 +271,8 @@ public class TupleDesc implements Serializable {
      * that are included in this TupleDesc
      */
     public static Iterator<TDItem> iterator() { 
-    	Iterator<TDItem> i = Arrays.asList(items).iterator();
-        return i;
+    	//Iterator<TDItem> i = Arrays.asList(items).iterator();
+        return null;
     }
 
 }
