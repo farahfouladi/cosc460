@@ -2,6 +2,7 @@ package simpledb;
 
 import java.util.*;
 
+import simpledb.HeapFile.HeapFileIterator;
 import simpledb.TupleDesc.TDItem;
 
 /**
@@ -59,7 +60,6 @@ public class SeqScan implements DbIterator {
     public void open() throws DbException, TransactionAbortedException {
     	this.i = Database.getCatalog().getDatabaseFile(tableid).iterator(tid);
     	this.i.open();
-    	
     }
 
     /**
@@ -72,18 +72,14 @@ public class SeqScan implements DbIterator {
      * prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-    	System.out.println("Table Id = " + this.tableid);
     	DbFile file = Database.getCatalog().getDatabaseFile(tableid);
     	TupleDesc td = file.getTupleDesc();
     	String alias = getAlias();
     	int numTuples = td.numFields();
-    	System.out.println("NUM FIELDS TAODAY " + numTuples);
-    	System.out.println(numTuples);
     	int k;
     	Type[] types = new Type[numTuples];
     	String[] names = new String[numTuples];
     	for (k=0;k<numTuples;k++) {
-    		System.out.println(names[k]);
     		types[k] = td.getFieldType(k);
     		names[k] = alias + "." + td.getFieldName(k);
     	}
@@ -92,32 +88,28 @@ public class SeqScan implements DbIterator {
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-    	if (i == null){
-    		return false;
-    	}
-    	return i.hasNext();
+    	if (i == null) {
+			return false;
+		}
+		return i.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
+    	
     	if(i==null){
     		throw new NoSuchElementException();
     	}
-        Tuple tup = i.next();
-        if(tup == null){
-        	throw new NoSuchElementException();
-        }
-        
-        return tup;
+        return i.next();
     }
 
     public void close() {
+    	i.close();
     	this.i = null;
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-    	this.i.close();
-    	this.i.open();
+    	i.rewind();
     }
 }

@@ -57,9 +57,9 @@ public class TupleDesc implements Serializable {
      *                be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
-    	System.out.println("making tuple desc");
+    	//System.out.println("making tuple desc");
         int num = typeAr.length;
-        System.out.println("TD: num = " + num);
+        //System.out.println("TD: num = " + num);
         TDItem item;
         if (num > 0) {
         	items = new TDItem[num];

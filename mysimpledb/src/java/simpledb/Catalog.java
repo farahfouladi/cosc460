@@ -42,17 +42,17 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
     	//adding all elements to the end of the list
-    	System.out.println("Adding a table");
-    	System.out.println("(file 3 fields) / tuple name = " + file.getTupleDesc().getFieldName(0));
+    	//System.out.println("Adding a table");
+    	//System.out.println("(file 3 fields) / tuple name = " + file.getTupleDesc().getFieldName(0));
         tables.add(file);
         names.add(name);
         keys.add(pkeyField);
     }
 
     public void addTable(DbFile file, String name) {
-    	System.out.println("ADDING TABLE");
-    	System.out.println("(file) 2 fields / tuple name = " + file.getTupleDesc().getFieldName(0));
-    	System.out.println("(file) 2 fields / file id = " + file.getId());
+    	//System.out.println("ADDING TABLE");
+    	//System.out.println("(file) 2 fields / tuple name = " + file.getTupleDesc().getFieldName(0));
+    	//System.out.println("(file) 2 fields / file id = " + file.getId());
     	addTable(file, name, "");
     }
 
@@ -96,7 +96,7 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        System.out.println("start getTupleDesc");
+        //System.out.println("start getTupleDesc");
     	int i;
         int size = tables.size();
         TupleDesc td = null;
@@ -107,11 +107,11 @@ public class Catalog {
         try {
         	for (i=0;i<size;i++) {
         		file = tables.get(i);
-        		System.out.println(file.getId());
-        		System.out.println(tableid);
+        		//System.out.println(file.getId());
+        		//System.out.println(tableid);
         		if (file.getId() == tableid) {
         			td = file.getTupleDesc();
-        			System.out.println("CATALOG: num fields " + td.numFields());
+        			//System.out.println("CATALOG: num fields " + td.numFields());
         		}
         	}
             
@@ -119,7 +119,7 @@ public class Catalog {
         catch(Exception e) {
         	throw new NoSuchElementException();
         }
-        System.out.println("end getTupleDesc");
+        //System.out.println("end getTupleDesc");
         return td;
     }
 
@@ -133,7 +133,7 @@ public class Catalog {
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         int i;
         int size = tables.size();
-        System.out.println("number of tables in file is " + size);
+        //System.out.println("number of tables in file is " + size);
     	DbFile file = null;
     	DbFile fileToReturn = null;
         if (size==0) {
