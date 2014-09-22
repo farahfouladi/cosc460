@@ -98,7 +98,7 @@ public class Tuple implements Serializable {
         String s = "";
         for (i=0;i<n;i++) {
         	if (i<n-1) {
-        		s += fields[i]+"wut";
+        		s += fields[i]+"\t";
         	}
         	else  {
         		s+=fields[i];

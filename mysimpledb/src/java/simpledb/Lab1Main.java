@@ -29,7 +29,7 @@ public class Lab1Main {
             f.open();
             while (f.hasNext()) {
                 Tuple tup = f.next();
-                System.out.println("In while loop in main:" + tup);
+                System.out.println(tup);
             }
             f.close();
             Database.getBufferPool().transactionComplete(tid);
