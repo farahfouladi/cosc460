@@ -45,13 +45,13 @@ public class HeapPage implements Page, Iterable<Tuple> {
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
         for (int i = 0; i < header.length; i++)
             header[i] = dis.readByte();
 
         tuples = new Tuple[numSlots];
+
         try {
             // allocate and read the actual records of this page
             for (int i = 0; i < tuples.length; i++)
@@ -81,7 +81,8 @@ public class HeapPage implements Page, Iterable<Tuple> {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {
-    	double headSize = Math.ceil(this.getNumTuples()/8);
+    	double headSize = Math.ceil((double)this.getNumTuples()/8);
+    	System.out.println("HEADSIZE = " + headSize);
     	return (int) headSize;
 
     }

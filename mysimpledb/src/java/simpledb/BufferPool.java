@@ -71,16 +71,20 @@ public class BufferPool {
             throws TransactionAbortedException, DbException {
         Page page = null;
         if(bpool.containsKey(pid)){
+        	System.out.println("page is in buffer pool!");
             page = bpool.get(pid);
         }
         else {
+        	System.out.println("adding page where pid is " + pid.hashCode() + "to buffer pool");
             int tableid = pid.getTableId();
             DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
             page = dbFile.readPage(pid);
             bpool.put(pid, page);
+            System.out.println("put page in buffer pool");
         }
         return page;
     }
+    
 
 
     /**
