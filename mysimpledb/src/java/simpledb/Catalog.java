@@ -144,7 +144,6 @@ public class Catalog {
         		file = tables.get(i);
         		if (file.getId() == tableid) {
         			fileToReturn = file;
-        			System.out.println("get db file numtup " + file.getTupleDesc().numFields());
         			break;
         		}
         	}
