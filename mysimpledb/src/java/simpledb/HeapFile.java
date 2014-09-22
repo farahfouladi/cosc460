@@ -63,6 +63,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
+    	System.out.println("reading page from OS");
     	int pgNo = pid.pageNumber(); 
         byte[] b = new byte[BufferPool.getPageSize()];
         OutputStream ous = new ByteArrayOutputStream();
@@ -70,6 +71,7 @@ public class HeapFile implements DbFile {
         int read = 0;
         Page pg;
         try {
+        	System.out.println(f);
 			fis = new FileInputStream(f);
 			fis.skip( (pgNo)*BufferPool.getPageSize() );
 			while ( (read = fis.read(b)) != -1){ //reads up to b.length bytes of data from the input stream
@@ -78,8 +80,10 @@ public class HeapFile implements DbFile {
 	    ous.close();
 	    fis.close();
 	    HeapPageId hpid = ((HeapPageId) pid);
+	    System.out.println("pid in read page method is " + hpid.hashCode());
 	    pg = new HeapPage(hpid,b);  //ERROR IS HERE
 		} catch (Exception e) {
+			System.out.println("error in read page");
 			throw new IllegalArgumentException();
 		}
        return pg;
@@ -138,18 +142,19 @@ public class HeapFile implements DbFile {
 
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
+			System.out.println("I am in the heapfile terator opens method");
 	    	BufferPool bp;
 	    	HeapPageId hpId;
 			bp = Database.getBufferPool();
+			
 			hpId = new HeapPageId(getId(), pgNo);
 			
 			Page page;
 			Permissions perm = null; // what are the permissions = problem??
 			try {
 				page = bp.getPage(tid, hpId, perm);
-				System.out.println("IS THIS A THING");
 				tupItr = new TupleIterator(td, (HeapPage)page);
-				//System.out.println(tupItr);
+				System.out.println(tupItr);
 				tupItr.open();
 			}
 			catch(Exception e) {
@@ -162,15 +167,12 @@ public class HeapFile implements DbFile {
 				TransactionAbortedException {
 			
 			if (tupItr == null){
-				System.out.print("THIS IS ONE");
 				return false;	
 			}
 			if (next != null) {
-				System.out.print("THIS IS TWO");
 				return true;
 			}
 			else {
-				System.out.print("THIS IS THREE");
 				fetchNext();
 				return next != null;
 			}
