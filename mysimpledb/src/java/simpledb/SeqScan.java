@@ -89,6 +89,7 @@ public class SeqScan implements DbIterator {
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
     	if (i == null) {
+    		System.out.println("not here right?!?!?!?!?!?");
 			return false;
 		}
 		return i.hasNext();
@@ -100,7 +101,15 @@ public class SeqScan implements DbIterator {
     	if(i==null){
     		throw new NoSuchElementException();
     	}
-        return i.next();
+    	
+    	Tuple tup = i.next();
+        if(tup != null){
+                return tup;
+        } 
+        else {
+                throw new NoSuchElementException("Nope");
+        }
+
     }
 
     public void close() {

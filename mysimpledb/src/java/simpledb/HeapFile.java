@@ -64,20 +64,18 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
     	System.out.println("reading page from OS");
-    	int pgNo = pid.pageNumber(); 
+    	int pgNo = pid.pageNumber();
         byte[] b = new byte[BufferPool.getPageSize()];
-        OutputStream ous = new ByteArrayOutputStream();
-        FileInputStream fis;
-        int read = 0;
+        BufferedInputStream fis;
         Page pg;
         try {
         	System.out.println(f);
-			fis = new FileInputStream(f);
+			fis = new BufferedInputStream(new FileInputStream(f));
 			fis.skip( (pgNo)*BufferPool.getPageSize() );
-			while ( (read = fis.read(b)) != -1){ //reads up to b.length bytes of data from the input stream
-				ous.write(b,0,read);
-		}
-	    ous.close();
+			int bytesRead = fis.read(b,0,BufferPool.getPageSize());
+			if(bytesRead != BufferPool.getPageSize()){
+				throw new RuntimeException();
+			}
 	    fis.close();
 	    HeapPageId hpid = ((HeapPageId) pid);
 	    System.out.println("pid in read page method is " + hpid.hashCode());
@@ -101,7 +99,10 @@ public class HeapFile implements DbFile {
     public int numPages() {
         int fileSize = (int)f.length();
         int pageSize = BufferPool.PAGE_SIZE;
-        return (int)Math.ceil(pageSize/fileSize);
+        System.out.println("filesize: " + fileSize);
+        System.out.println("pagesize " + pageSize);
+        System.out.println("we are returning: " + (int)Math.ceil(fileSize/(pageSize)));
+        return (int)Math.ceil(fileSize/(pageSize));
     }
 
     // see DbFile.java for javadocs
@@ -129,20 +130,22 @@ public class HeapFile implements DbFile {
     class HeapFileIterator implements DbFileIterator {
     	
     	private int pgNo;
-    	private TupleIterator tupItr;
-    	private Tuple next;
+    	private Iterator<Tuple> tupItr = null;
+    	private Tuple next = null;
     	private TransactionId tid;
+    	private Iterable<Tuple> tuples = null;
     	
     	public HeapFileIterator(TransactionId tid) {
-			// assume starting at first page
-			pgNo = 0;
 			this.tid = tid;
-			next = null;
     	}
 
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
-			System.out.println("I am in the heapfile terator opens method");
+			 pgNo = 0;
+             tuples = getTupsNextPage(pgNo);
+             tupItr = tuples.iterator();
+			
+			/*System.out.println("I am in the heapfile terator opens method");
 	    	BufferPool bp;
 	    	HeapPageId hpId;
 			bp = Database.getBufferPool();
@@ -159,52 +162,118 @@ public class HeapFile implements DbFile {
 			}
 			catch(Exception e) {
 			
-			}
+			}*/
 		}
 
 		@Override
 		public boolean hasNext() throws DbException,
 				TransactionAbortedException {
-			
-			if (tupItr == null){
-				return false;	
-			}
-			if (next != null) {
-				return true;
-			}
-			else {
-				fetchNext();
-				return next != null;
-			}
+	       	 System.out.println("number of pages from numPages() " + numPages());
+	       	 System.out.println("pgNo we are on " + pgNo);
+			 if( tupItr == null){
+	             return false;
+			 }
+			 
+	         if(tupItr.hasNext()){
+	                 // next tuple found in this page
+	                 return true;
+	         } 
+	         else if (!tupItr.hasNext() && pgNo < numPages()-1){
+	        	 System.out.println("**********************GOING TO NEXT PAGE"+ pgNo);
+                 List<Tuple> nextPgTups = getTupsNextPage(pgNo + 1);
+                 System.out.println("size of next page tups :" + nextPgTups);
+                 if(nextPgTups.size() != 0){
+                	 System.out.println("returning true?");
+                	 return true;
+                 } 
+                 else {
+                 	return false;
+                 }
+	         } 
+	         else {
+	                 // no tuple on this page and no more pages
+	                 return false;
+	         }
+
+//			if (tupItr == null){
+//				System.out.println("***1  " + pgNo);
+//				return false;	
+//			}
+//			if (next != null) {
+//				System.out.println("***2  " + pgNo);
+//				return true;
+//			}
+//			else {
+//				System.out.println("***3  " + pgNo);
+//				fetchNext();
+//				return next != null;
+//			}
 		}
 
 		@Override
 		public Tuple next() throws DbException, TransactionAbortedException,
 				NoSuchElementException {
+			            if(tupItr == null){
+            	System.out.println("tup is null");
+            	throw new NoSuchElementException("open() not called on iterator");
+            }
+           
+            if(tupItr.hasNext()){
+            	System.out.println("hasnext tup");
+                Tuple t = tupItr.next();
+                return t;
+            } 
+            else if(!tupItr.hasNext() && pgNo < numPages()-1) {   //***********doesnt go in here ever
+               //go to next pfg
+            	System.out.println("getting next page");
+                pgNo += 1;
+                tuples = getTupsNextPage(pgNo);
+                tupItr = tuples.iterator();
+                if (tupItr.hasNext())
+                	return tupItr.next();
+                else {
+                	throw new NoSuchElementException("No more Tuples");
+                }
+            } 
+            else {
+            	System.out.println("hereh?");
+                throw new NoSuchElementException("No more Tuples");
+            }
+
 			
-			if (!hasNext()) {
-	            throw new NoSuchElementException("");
-	        }
-			if (next == null) {
-				throw new NoSuchElementException();
-			}
-			Tuple toReturn = next;
-			next = null;
-			return toReturn;
+			
+//			if(tupItr == null){
+//				throw new NoSuchElementException("call open()");
+//			}
+//			
+//			if (!hasNext()) {
+//	            throw new NoSuchElementException("nope");
+//	        }
+//			if (next == null) {
+//				throw new NoSuchElementException();
+//			}
+//			Tuple toReturn = next;
+//			next = null;
+//			return toReturn;
 			
 		}
 		
-		private void fetchNext() throws TransactionAbortedException, DbException {
-			Permissions perm = null;
-			BufferPool bp;
-	    	HeapPageId hpId;
-			bp = Database.getBufferPool();
+		/*private void fetchNext() throws TransactionAbortedException, DbException {
 			
 			if (tupItr.hasNext()) {
 				next = tupItr.next();
 			}
-			else if (pgNo < numPages()) {  //not at last page
-				this.pgNo += 1;
+			else if (tupItr.hasNext() && pgNo < numPages()-1) {  //not at last page
+				pgNo += 1;
+				List<Tuple> tupsNextPage = getTupsNextPage(pgNo);
+                tupItr = tupsNextPage.iterator();
+                if(tupsNextPage.size() != 0) {
+                	tupsNextPage.next()
+                }
+				*/
+				
+				/*this.pgNo += 1;
+				System.out.println("THE PAGE NO IS: " + pgNo);
 				hpId = new HeapPageId(getId(), pgNo);
 				HeapPage page = (HeapPage) bp.getPage(tid, hpId, perm);
 				tupItr.close();
@@ -213,18 +282,34 @@ public class HeapFile implements DbFile {
 				tupItr.open();
 				if (tupItr.hasNext()) {
 					next = tupItr.next();
-				}
+				}*/
+		
+		
+		
+		private List<Tuple> getTupsNextPage(int pgNo) throws TransactionAbortedException, DbException {
+			HeapPageId hpId = new HeapPageId(getId(), pgNo);
+			Page page = Database.getBufferPool().getPage(tid, hpId, Permissions.READ_ONLY);
+			System.out.println(pgNo);
+			List<Tuple> tups = new ArrayList<Tuple>();
+			HeapPage hpage = (HeapPage)page;
+			System.out.println(hpage.getNumEmptySlots());
+			Iterator<Tuple> Itr = hpage.iterator();
+			while(Itr.hasNext()){ 		//this says there is no tuples on new page...but there are 3 pages and we only go on pg0
+				tups.add(Itr.next());
 			}
+			System.out.println(tups);
+			return tups;
 		}
 
 		@Override
 		public void rewind() throws DbException, TransactionAbortedException {
-			this.pgNo = 0;
+			close();
+			open();
 		}
 
 		@Override
 		public void close() {
-			next = null;
+			//next = null;
 			//tupItr.close();
 			tupItr = null;
 		}
