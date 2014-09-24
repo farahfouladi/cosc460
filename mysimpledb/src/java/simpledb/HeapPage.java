@@ -311,9 +311,12 @@ public class HeapPage implements Page, Iterable<Tuple> {
         int val = header[byteNum];
         boolean flag = false;
         val>>=bitNum;
+        //System.out.println(val);
         if ((val & 1) == 1) {
         	flag = true;
         }
+        //System.out.println(i + " " + flag);
+
         return flag;
     }
 
