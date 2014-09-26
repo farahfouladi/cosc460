@@ -19,6 +19,9 @@ public class HeapPage implements Page, Iterable<Tuple> {
     final byte header[];
     final Tuple tuples[];
     final int numSlots;
+    
+    private TransactionId tid_dirty;
+    private boolean dirty;
 
     byte[] oldData;
     private final Byte oldDataLock = new Byte((byte) 0);
@@ -248,8 +251,19 @@ public class HeapPage implements Page, Iterable<Tuple> {
      *                     already empty.
      */
     public void deleteTuple(Tuple t) throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        if (this.pid != t.getRecordId().getPageId()) {
+        	throw new DbException("page IDs do not match");
+        }
+        if (getNumEmptySlots() == numSlots) {
+        	throw new DbException("page is empty");
+        }
+        int tupleNo = t.getRecordId().tupleno();
+        if (!isSlotUsed(tupleNo)) {
+        	return;
+        }
+        else {
+        	markSlotUsed(tupleNo, false);
+        }
     }
 
     /**
@@ -261,8 +275,24 @@ public class HeapPage implements Page, Iterable<Tuple> {
      *                     is mismatch.
      */
     public void insertTuple(Tuple t) throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        if (getNumEmptySlots()==0){
+        	throw new DbException("table is full");
+        }
+        int i;
+        int empty_slot = -1;
+        for (i=0;i<numSlots;i++) {
+        	if (!isSlotUsed(i)) {
+        		empty_slot = i;
+        		break;
+        	}
+        }
+        if (empty_slot==-1) {
+        	throw new DbException("an empty slot was not found.");
+        }
+        tuples[empty_slot] = t;
+        markSlotUsed(empty_slot, true);
+        RecordId rid = new RecordId(this.pid,empty_slot);
+        t.setRecordId(rid);
     }
 
     /**
@@ -270,17 +300,25 @@ public class HeapPage implements Page, Iterable<Tuple> {
      * that did the dirtying
      */
     public void markDirty(boolean dirty, TransactionId tid) {
-        // some code goes here
-        // not necessary for lab1
+        if (!dirty) {
+        	this.dirty = dirty;
+        }
+        else {
+        	this.dirty = dirty;
+        	this.tid_dirty = tid;
+        }
     }
 
     /**
      * Returns the tid of the transaction that last dirtied this page, or null if the page is not dirty
      */
     public TransactionId isDirty() {
-        // some code goes here
-        // Not necessary for lab1
-        return null;      
+        if (this.dirty)   {
+        	return tid_dirty;
+        }
+        else {
+        	return null;
+        }
     }
 
     /**
@@ -324,8 +362,17 @@ public class HeapPage implements Page, Iterable<Tuple> {
      * Abstraction to fill or clear a slot on this page.
      */
     private void markSlotUsed(int i, boolean value) {
-        // some code goes here
-        // not necessary for lab1
+        int header_byte = i/8;
+        int offset = i%8;
+        byte b = header[header_byte];
+        if (value==false) { //mark slot with 0
+        	b = (byte) (b ^ (1<<offset));
+        	header[header_byte] = b;
+        }
+        else { // mark slot with 1
+        	b = (byte) (b | (1<<offset));
+        	header[header_byte] = b;
+        }
     }
 
     /**

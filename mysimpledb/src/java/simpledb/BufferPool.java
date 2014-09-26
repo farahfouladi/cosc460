@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -75,12 +76,10 @@ public class BufferPool {
             page = bpool.get(pid);
         }
         else {
-        	System.out.println("adding page where pid is " + pid.hashCode() + "to buffer pool");
             int tableid = pid.getTableId();
             DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
             page = dbFile.readPage(pid);
             bpool.put(pid, page);
-            System.out.println("put page in buffer pool");
         }
         return page;
     }
@@ -149,8 +148,18 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+    	 try {
+    		 ArrayList<Page> pages;
+    		 DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
+    		 HeapFile hf = (HeapFile)dbFile;
+    		 pages = hf.insertTuple(tid, t);
+    		 for (Page page : pages) {
+    			 page.markDirty(true,tid);
+    			 bpool.put(page.getId(), page);
+    		 }
+    	} catch (DbException e){
+    		 e.printStackTrace();
+    	}
     }
 
     /**
@@ -167,8 +176,13 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+    	int tableId = t.getRecordId().getPageId().getTableId();
+    	DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
+    	HeapFile hf = (HeapFile)dbFile;
+    	ArrayList<Page> pgs = hf.deleteTuple(tid, t);
+  		for (Page page : pgs) {
+			 page.markDirty(true,tid);
+		 }
     }
 
     /**
