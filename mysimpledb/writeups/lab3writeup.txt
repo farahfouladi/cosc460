@@ -3,13 +3,73 @@ Report for Lab 3
 
 Answer the questions from the lab description here.  Questions 8 and 9 do not require answers.
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
+Farah Fouladi & Lauren Yeary
+
+Lab 3 Milestone
+
+
+1. TupleIterator, SeqScan, Operator, Join, Insert, HashEquiJoin, Filter, Delete
+
+2. Aggregate, Delete, Filter, HashEquiJoin, Insert, Join, OrderBy, Project
+
+3. Insert, Filter, Join, Project
+
+4. Filter extends Operator which takes care of next() and hasNext() so if either of them are called on a Filter object, then the operator will execute the methods.
+
+5. Filter = Select
+
+	- setting a next where next value is private and stores the next tuple that complies with predicate
+
+	- we don't need to deal withe multiple pages because this in on top of the previos iterator and that does have cases for many pages
+
+	fetchNext () {
+		while iterR.hasNext() {
+			tup = iterR.next()
+			if check that tup matches prediate {
+				return tup
+			}
+		}
+		return null
+	}
+
+6.  Using the while loops with iterators allows us go through the whole S with one R tuple, and then rewind at the end before the next tuple in R
+
+	list = []
+
+	while iterR.hasNext() {
+		t1 = iterR.next()
+		while iterS.hasNext() {
+			t2 = iterS.next()
+			if t1 and t2 match join predicate:
+				tNew = merge(t1, t2)
+				list.append(tNew);
+		}
+		t2.rewind()
+	}
+
+7. 
+--t1, t2 refer to the "current" tuples in R and S respectively, both initially null.
+--iterR and iterS refer to iterators over R and S respectively, both initially open and pointing to the first tuple in the respective relations.
+
+
+		while iterS.hasNext() {
+			t2 = iterS.next()
+			if t1 and t2 match join predicate{
+				tNew = merge(t1, t2)
+				return tNew;
+			}
+			if !(iterS.hasNext()) {
+				if iterR.hasNext() {
+					t1 = iterR.next()
+					t2.rewind()
+			}
+		}
+
+			
+
+
+
+
 
 After you complete lab 3, please answer the following questions.  
 
