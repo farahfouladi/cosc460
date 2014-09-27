@@ -63,7 +63,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-    	System.out.println("reading page from OS");
+    	System.out.println("ENTERING THE READ PAGE METHOD IN HEAP FILE");
     	int pgNo = pid.pageNumber();
         byte[] b = new byte[BufferPool.getPageSize()];
         BufferedInputStream fis;
@@ -79,7 +79,7 @@ public class HeapFile implements DbFile {
 	    fis.close();
 	    HeapPageId hpid = ((HeapPageId) pid);
 	    System.out.println("pid in read page method is " + hpid.hashCode());
-	    pg = new HeapPage(hpid,b);  //ERROR IS HERE
+	    pg = new HeapPage(hpid,b);  
 		} catch (Exception e) {
 			System.out.println("error in read page");
 			throw new IllegalArgumentException();
@@ -89,8 +89,39 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        /*int pageNo = page.getId().pageNumber();
+        byte[] b = page.getPageData();
+        BufferedOutputStream bos;
+        int pageSize = BufferPool.getPageSize();
+        try {
+        	bos = new BufferedOutputStream(new FileOutputStream(f));
+        	System.out.println("write page: page number = "+pageNo);
+        	if (pageNo*pageSize + pageSize < f.length()) {
+        		bos.write(b, pageNo*pageSize, pageSize);
+        		bos.close();
+        	}
+        	else { // append to the end of the file
+        		
+        	}
+        } catch (Exception e) {
+        	System.out.println("error in write page");
+        	throw new IllegalArgumentException();
+        } */
+    	 try {
+    		 PageId pid= page.getId();
+    		 HeapPageId hpid= (HeapPageId)pid;
+    		 RandomAccessFile file = new RandomAccessFile(f,"rw");
+    		 int offset = pid.pageNumber()*BufferPool.getPageSize();
+    		 byte[] b=new byte[BufferPool.getPageSize()];
+    		 b=page.getPageData();
+    		 file.seek(offset);
+    		 file.write(b, 0, BufferPool.getPageSize());
+    		 file.close();
+    	} catch (Exception e) {
+        	System.out.println("error in write page");
+        	throw new IllegalArgumentException();
+        }
+        
     }
 
     /**
@@ -99,26 +130,48 @@ public class HeapFile implements DbFile {
     public int numPages() {
         int fileSize = (int)f.length();
         int pageSize = BufferPool.PAGE_SIZE;
-        System.out.println("filesize: " + fileSize);
-        System.out.println("pagesize " + pageSize);
-        System.out.println("we are returning: " + (int)Math.ceil(fileSize/(pageSize)));
         return (int)Math.ceil(fileSize/(pageSize));
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+    	ArrayList<Page> list = new ArrayList<Page>();
+    	int total_pages = numPages();
+    	int i;
+    	int id = getId();
+    	HeapPageId hpId;
+    	boolean flag = false;
+    	for (i=0;i<total_pages;i++) {
+    		hpId = new HeapPageId(id, i);
+    		HeapPage pg = (HeapPage) Database.getBufferPool().getPage(tid,hpId,Permissions.READ_ONLY);
+    		if (pg.getNumEmptySlots() != 0) { 
+    			pg.insertTuple(t);
+    			writePage(pg);
+    			list.add(pg);
+    			flag=true;
+    			break;
+    		}
+    	}
+    	if (flag==false) {
+    		hpId = new HeapPageId(getId(), numPages());
+    		HeapPage new_pg = new HeapPage(hpId, HeapPage.createEmptyPageData());
+    		new_pg.insertTuple(t);
+    		writePage(new_pg);
+    		list.add(new_pg);
+    	}
+        return list;
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+    	ArrayList<Page> list = new ArrayList<Page>();
+        PageId pid = t.getRecordId().getPageId();
+        HeapPage pg = (HeapPage) Database.getBufferPool().getPage(tid,pid,Permissions.READ_ONLY);
+        pg.deleteTuple(t);
+        list.add(pg);
+        return list;
     }
 
     // see DbFile.java for javadocs
