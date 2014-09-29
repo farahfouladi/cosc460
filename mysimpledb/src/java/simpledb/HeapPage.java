@@ -85,7 +85,7 @@ public class HeapPage implements Page, Iterable<Tuple> {
      */
     private int getHeaderSize() {
     	double headSize = Math.ceil((double)this.getNumTuples()/8);
-    	System.out.println("HEADSIZE = " + headSize);
+    	//System.out.println("HEADSIZE = " + headSize);
     	return (int) headSize;
 
     }
