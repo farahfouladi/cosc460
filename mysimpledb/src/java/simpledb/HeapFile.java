@@ -63,7 +63,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-    	System.out.println("ENTERING THE READ PAGE METHOD IN HEAP FILE");
+    	//System.out.println("ENTERING THE READ PAGE METHOD IN HEAP FILE");
     	int pgNo = pid.pageNumber();
         byte[] b = new byte[BufferPool.getPageSize()];
         BufferedInputStream fis;
@@ -78,7 +78,7 @@ public class HeapFile implements DbFile {
 			}
 	    fis.close();
 	    HeapPageId hpid = ((HeapPageId) pid);
-	    System.out.println("pid in read page method is " + hpid.hashCode());
+	    //System.out.println("pid in read page method is " + hpid.hashCode());
 	    pg = new HeapPage(hpid,b);  
 		} catch (Exception e) {
 			System.out.println("error in read page");
@@ -130,6 +130,9 @@ public class HeapFile implements DbFile {
     public int numPages() {
         int fileSize = (int)f.length();
         int pageSize = BufferPool.PAGE_SIZE;
+        //System.out.println("File size: " + fileSize);
+        //System.out.println("Number of Pages: " + ((int)Math.ceil(fileSize/(pageSize))));
+        //System.out.println(fileSize);
         return (int)Math.ceil(fileSize/(pageSize));
     }
 
@@ -221,8 +224,7 @@ public class HeapFile implements DbFile {
 		@Override
 		public boolean hasNext() throws DbException,
 				TransactionAbortedException {
-	       	 System.out.println("number of pages from numPages() " + numPages());
-	       	 System.out.println("pgNo we are on " + pgNo);
+	       	 //System.out.println("pgNo we are on " + pgNo);
 			 if( tupItr == null){
 	             return false;
 			 }
@@ -232,11 +234,10 @@ public class HeapFile implements DbFile {
 	                 return true;
 	         } 
 	         else if (!tupItr.hasNext() && pgNo < numPages()-1){
-	        	 System.out.println("**********************GOING TO NEXT PAGE"+ pgNo);
                  List<Tuple> nextPgTups = getTupsNextPage(pgNo + 1);
-                 System.out.println("size of next page tups :" + nextPgTups);
+                 //System.out.println("size of next page tups :" + nextPgTups);
                  if(nextPgTups.size() != 0){
-                	 System.out.println("returning true?");
+                	 //System.out.println("returning true?");
                 	 return true;
                  } 
                  else {
@@ -267,18 +268,17 @@ public class HeapFile implements DbFile {
 		public Tuple next() throws DbException, TransactionAbortedException,
 				NoSuchElementException {
 			            if(tupItr == null){
-            	System.out.println("tup is null");
             	throw new NoSuchElementException("open() not called on iterator");
             }
            
             if(tupItr.hasNext()){
-            	System.out.println("hasnext tup");
+            	//System.out.println("hasnext tup");
                 Tuple t = tupItr.next();
                 return t;
             } 
             else if(!tupItr.hasNext() && pgNo < numPages()-1) {   //***********doesnt go in here ever
-               //go to next pfg
-            	System.out.println("getting next page");
+               //go to next pg
+            	//System.out.println("###### getting next page");
                 pgNo += 1;
                 tuples = getTupsNextPage(pgNo);
                 tupItr = tuples.iterator();
@@ -289,7 +289,6 @@ public class HeapFile implements DbFile {
                 }
             } 
             else {
-            	System.out.println("hereh?");
                 throw new NoSuchElementException("No more Tuples");
             }
 
@@ -342,15 +341,14 @@ public class HeapFile implements DbFile {
 		private List<Tuple> getTupsNextPage(int pgNo) throws TransactionAbortedException, DbException {
 			HeapPageId hpId = new HeapPageId(getId(), pgNo);
 			Page page = Database.getBufferPool().getPage(tid, hpId, Permissions.READ_ONLY);
-			System.out.println(pgNo);
 			List<Tuple> tups = new ArrayList<Tuple>();
 			HeapPage hpage = (HeapPage)page;
-			System.out.println(hpage.getNumEmptySlots());
+			//System.out.println("num of empty slots: " + hpage.getNumEmptySlots());
 			Iterator<Tuple> Itr = hpage.iterator();
 			while(Itr.hasNext()){ 		//this says there is no tuples on new page...but there are 3 pages and we only go on pg0
 				tups.add(Itr.next());
 			}
-			System.out.println(tups);
+			//System.out.println(tups);
 			return tups;
 		}
 
