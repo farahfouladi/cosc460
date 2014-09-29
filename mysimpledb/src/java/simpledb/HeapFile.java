@@ -69,7 +69,7 @@ public class HeapFile implements DbFile {
         BufferedInputStream fis;
         Page pg;
         try {
-        	System.out.println(f);
+        	System.out.println("file (in heap file read method) = "+ f);
 			fis = new BufferedInputStream(new FileInputStream(f));
 			fis.skip( (pgNo)*BufferPool.getPageSize() );
 			int bytesRead = fis.read(b,0,BufferPool.getPageSize());
