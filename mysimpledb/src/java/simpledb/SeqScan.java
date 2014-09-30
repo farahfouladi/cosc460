@@ -114,7 +114,7 @@ public class SeqScan implements DbIterator {
 
     public void close() {
     	i.close();
-    	this.i = null;
+    	//this.i = null;
     }
 
     public void rewind() throws DbException, NoSuchElementException,
