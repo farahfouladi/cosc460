@@ -194,6 +194,7 @@ public class TupleDesc implements Serializable {
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         int newSize = td1.numFields() + td2.numFields();
+        //System.out.println("new size =" + newSize);
         Type[] types = new Type[newSize];
         String[] fieldNames = new String[newSize];
         int i;
@@ -270,9 +271,8 @@ public class TupleDesc implements Serializable {
      * @return An iterator which iterates over all the field TDItems
      * that are included in this TupleDesc
      */
-    public static Iterator<TDItem> iterator() { 
-    	//Iterator<TDItem> i = Arrays.asList(items).iterator();
-        return null;
+    public Iterator<TDItem> iterator() {  // this was static before....
+    	return Arrays.asList(items).iterator();
     }
 
 }
