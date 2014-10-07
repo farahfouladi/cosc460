@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Lab3Main {
 
@@ -67,6 +68,35 @@ public class Lab3Main {
         }
         joinSandT.close();
         Database.getBufferPool().transactionComplete(tID);
+        
+        System.out.println();
+        System.out.println("Main For Exercise 5 part 3 :");
+        System.out.println("-------------------------------------");
+        TransactionId t = new TransactionId();
+        SeqScan scanS = new SeqScan(tId, Database.getCatalog().getTableId("Students"));
+        SeqScan scanT = new SeqScan(tId, Database.getCatalog().getTableId("Takes"));
+        SeqScan scanP = new SeqScan(tId, Database.getCatalog().getTableId("Profs"));
+        JoinPredicate join_ST_equals = new JoinPredicate(0, Predicate.Op.EQUALS, 0);
+        Join joinST = new Join(join_ST_equals,scanS,scanT);
+        JoinPredicate join_P_equals = new JoinPredicate(3, Predicate.Op.EQUALS, 2);
+        Join joinP = new Join(join_P_equals,joinST,scanP);
+        StringField hay = new StringField("hay", Type.STRING_LEN);
+        Predicate profP = new Predicate(5, Predicate.Op.EQUALS, hay);
+        Filter filter = new Filter(profP, joinP);
+        ArrayList<Integer> listids = new ArrayList<Integer>();
+        listids.add(1);
+        ArrayList<Type> types = new ArrayList<Type>();
+        types.add(Type.STRING_TYPE);
+        Project proj = new Project(listids,types,filter);
+        
+        System.out.println("Results:");
+        proj.open();
+        while (proj.hasNext()) {
+            Tuple tup = proj.next();
+            System.out.println("\t"+tup);
+        }
+        proj.close();
+        Database.getBufferPool().transactionComplete(t);
     }
 
 }
