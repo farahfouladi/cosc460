@@ -64,20 +64,20 @@ public class IntHistogram {
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-    	System.out.println("adding value: " + v);
-    	System.out.println("min = "+ min);
-    	System.out.println("max - "+ max);
-    	System.out.println("numB = " + numB);
-    	System.out.println("bucket range = " + range);
+    	//System.out.println("adding value: " + v);
+    	//System.out.println("min = "+ min);
+    	//System.out.println("max - "+ max);
+    	//System.out.println("numB = " + numB);
+    	//System.out.println("bucket range = " + range);
         if (v<min) {
         	throw new RuntimeException();
         }
         if (v>max) {
         	throw new RuntimeException();
         }
-        System.out.println("FINDING");
+        //System.out.println("FINDING");
         int i = find(v);
-        System.out.println("FOUND! "+ i);
+        //System.out.println("FOUND! "+ i);
         hist[i]++;
         total++;
     }
@@ -85,10 +85,10 @@ public class IntHistogram {
     public int find(int v) {
     	int i;
         for (i=0;i<numB;i++) {
-        	System.out.println("i = "+i);
-        	System.out.println("VALUE "+v);
-        	System.out.println("lower = "+getLowerRange(i));
-        	System.out.println("upper = "+getUpperRange(i));
+        	//System.out.println("i = "+i);
+        	//System.out.println("VALUE "+v);
+        	//System.out.println("lower = "+getLowerRange(i));
+        	//System.out.println("upper = "+getUpperRange(i));
         	if (getLowerRange(i)<=v && getUpperRange(i)>v || i==numB-1) {
         		return i;
         	}
@@ -110,20 +110,30 @@ public class IntHistogram {
     	int index;
     	int num = 0;
     	switch (op) {
-    		case EQUALS: index = find(v);
+    		case EQUALS: if (v<min || v>max) return 0.0;
+    					 index = find(v);
     					 num = hist[index];
     					 return (double)num/total;
     		case GREATER_THAN: if (v<min) return 1.0;
-			   				   if (v>max) return 0.0;index = find(v);	
+			   				   if (v>max) return 0.0;
+			   				   index = find(v);	
     						   if (index==numB-1) return 0.0;
-    						   for (int i=index;i<numB;i++) {
+    						   for (int i=index+1;i<numB;i++) {
     							   num += hist[i];
     						   }
-    						   System.out.println("gt num "+num);
-    						   System.out.println("gt total "+total);
-    						   System.out.println("gt index "+index);
     						   return (double)num/total;
-    	
+    		case LESS_THAN: if (v<min) return 0.0;
+			   				if (v>max) return 1.0;
+			   				index = find(v);	
+			   				System.out.println("INDEX = "+index);
+			   				for (int i=0;i<index;i++) {
+			   					System.out.println("i = "+ i);
+			   					num += hist[i];
+			   				}
+			   				return (double)num/total;
+    		case GREATER_THAN_OR_EQ:return estimateSelectivity(Predicate.Op.EQUALS, v) + estimateSelectivity(Predicate.Op.GREATER_THAN, v);   
+    		case LESS_THAN_OR_EQ: return estimateSelectivity(Predicate.Op.EQUALS, v) + estimateSelectivity(Predicate.Op.LESS_THAN, v);
+    		case NOT_EQUALS: return 1 - estimateSelectivity(Predicate.Op.EQUALS, v);
     	}
         System.out.println("hi at end of eS (sis not return)");
         return -1.0;
