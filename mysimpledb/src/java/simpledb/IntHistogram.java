@@ -34,7 +34,11 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         
-        this.range = ((double)(max-min))/numB;
+        int distinct_val = max-min+1;
+        if (buckets>distinct_val) {
+        	numB = distinct_val;
+        }
+        this.range = (double)(numB)/distinct_val;
         this.total = 0;
         
         hist = new int[numB];
@@ -44,7 +48,7 @@ public class IntHistogram {
     }
     
     public double getLowerRange(int index) {
-    	return min + (index*range);
+    	return min + (index/range);
     }
     
     public double getUpperRange(int index) {
@@ -54,9 +58,9 @@ public class IntHistogram {
     	return getLowerRange(index+1);
     }
     
-    public double getRangePop(int index) {
-    	return getLowerRange(index) - getUpperRange(index);
-    }
+    //public double getRangePop(int index) {
+    	//return getLowerRange(index) - getUpperRange(index);
+    //}
 
     /**
      * Add a value to the set of values that you are keeping a histogram of.
@@ -113,7 +117,7 @@ public class IntHistogram {
     		case EQUALS: if (v<min || v>max) return 0.0;
     					 index = find(v);
     					 num = hist[index];
-    					 return (double)num/total;
+    					 return (double)num/total*range;
     		case GREATER_THAN: if (v<min) return 1.0;
 			   				   if (v>max) return 0.0;
 			   				   index = find(v);	
