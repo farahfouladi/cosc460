@@ -35,10 +35,12 @@ public class IntHistogram {
         this.max = max;
         
         int distinct_val = max-min+1;
-        if (buckets>distinct_val) {
+        if (numB>distinct_val) {
         	numB = distinct_val;
         }
-        this.range = (double)(numB)/distinct_val;
+        System.out.println("numB = "+ numB);
+        System.out.println("distict values = "+ distinct_val);
+        this.range = distinct_val/numB;
         this.total = 0;
         
         hist = new int[numB];
@@ -48,14 +50,21 @@ public class IntHistogram {
     }
     
     public double getLowerRange(int index) {
-    	return min + (index/range);
+    	return min + (index*range);
     }
     
     public double getUpperRange(int index) {
     	if ( index == numB-1 ) { //last bucket
-    		return max;
+    		return max+1; // include max!
     	}
     	return getLowerRange(index+1);
+    }
+    
+    public double getRange(int index) {
+    	if (index==numB-1) {
+    		return getUpperRange(index) - getLowerRange(index);
+    	}
+    	return range;
     }
     
     //public double getRangePop(int index) {
@@ -93,7 +102,7 @@ public class IntHistogram {
         	//System.out.println("VALUE "+v);
         	//System.out.println("lower = "+getLowerRange(i));
         	//System.out.println("upper = "+getUpperRange(i));
-        	if (getLowerRange(i)<=v && getUpperRange(i)>v || i==numB-1) {
+        	if (getLowerRange(i)<=v && getUpperRange(i)>v) {
         		return i;
         	}
         }
@@ -114,10 +123,15 @@ public class IntHistogram {
     	int index;
     	int num = 0;
     	switch (op) {
-    		case EQUALS: if (v<min || v>max) return 0.0;
+    		case EQUALS: System.out.println("Value is "+ v);
+    					 if (v<min || v>max) return 0.0;
     					 index = find(v);
+    					 System.out.println("can be found @ index "+ index);
     					 num = hist[index];
-    					 return (double)num/total*range;
+    					 System.out.println("num = " + num);
+    					 System.out.println("total = " + total);
+    					 System.out.println("range = "+ range);
+    					 return ((double)num/total)/getRange(index);
     		case GREATER_THAN: if (v<min) return 1.0;
 			   				   if (v>max) return 0.0;
 			   				   index = find(v);	
@@ -129,9 +143,7 @@ public class IntHistogram {
     		case LESS_THAN: if (v<min) return 0.0;
 			   				if (v>max) return 1.0;
 			   				index = find(v);	
-			   				System.out.println("INDEX = "+index);
 			   				for (int i=0;i<index;i++) {
-			   					System.out.println("i = "+ i);
 			   					num += hist[i];
 			   				}
 			   				return (double)num/total;
