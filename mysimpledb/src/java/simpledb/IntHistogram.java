@@ -123,29 +123,26 @@ public class IntHistogram {
     	int index;
     	int num = 0;
     	switch (op) {
-    		case EQUALS: System.out.println("Value is "+ v);
-    					 if (v<min || v>max) return 0.0;
+    		case EQUALS: if (v<min || v>max) return 0.0;
     					 index = find(v);
     					 System.out.println("can be found @ index "+ index);
     					 num = hist[index];
-    					 System.out.println("num = " + num);
-    					 System.out.println("total = " + total);
-    					 System.out.println("range = "+ range);
     					 return ((double)num/total)/getRange(index);
     		case GREATER_THAN: if (v<min) return 1.0;
 			   				   if (v>max) return 0.0;
 			   				   index = find(v);	
-    						   if (index==numB-1) return 0.0;
     						   for (int i=index+1;i<numB;i++) {
     							   num += hist[i];
     						   }
-    						   return (double)num/total;
+    						   double gtr_than_within_B = getUpperRange(index) - v - 1;
+    						   return (gtr_than_within_B/total)/getRange(index) + (double)num/total;
     		case LESS_THAN: if (v<min) return 0.0;
 			   				if (v>max) return 1.0;
 			   				index = find(v);	
 			   				for (int i=0;i<index;i++) {
 			   					num += hist[i];
 			   				}
+			   				// add equivalent within bucket less than (could also be 1 - >= ?? )
 			   				return (double)num/total;
     		case GREATER_THAN_OR_EQ:return estimateSelectivity(Predicate.Op.EQUALS, v) + estimateSelectivity(Predicate.Op.GREATER_THAN, v);   
     		case LESS_THAN_OR_EQ: return estimateSelectivity(Predicate.Op.EQUALS, v) + estimateSelectivity(Predicate.Op.LESS_THAN, v);
