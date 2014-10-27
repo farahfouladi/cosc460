@@ -92,6 +92,7 @@ public class SeqScan implements DbIterator {
     		System.out.println("not here right?!?!?!?!?!?");
 			return false;
 		}
+    	//problem with eviction test is here...
 		return i.hasNext();
     }
 

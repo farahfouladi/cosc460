@@ -20,11 +20,23 @@ Walk thru 2: simpledb.Parser.processNextStatement()
 
 Walk thru 3: simpledb.Parser.handleQueryStatement()
 
-	<fill this in>	
+	Returns a Query object.
+	
+	This method uses the tid and ZQuery s (inputs) to assign a logical plan with parseQueryLogicalPlan(tId, s).  
+	Then it uses the logical plan to set up a physical plan through the DBIterator with LogicalPlan.physicalPlan().
+	It then invokes the QueryPlanVisualizer if it is available and necessary.
 
 Walk thru 4: simpledb.Parser.parseQueryLogicalPlan()
 
-	<fill this in>
+	New logical plan is created from query (q from input).  Then method gets all tables in the FROM clause and scans them 
+	and adds them to the logical plan.  Then the methods parses for the WHERE clause using q.getWhere(). It calls 
+	processExpression() on the tid, the where exp and the logical plan.  This creates filter and join nodes as needed.
+	Then it fetches any GROUP BY clauses, scans and stores the info.  Then it walks the SELECT list and looks for 
+	aggregates.  If it finds any, it groups them and adds them to the logical plan using lp.addProjectField(aggField, aggFun)
+	and lp.addAggregate(aggFun, aggField, groupByField).  If not, it throws an exception.  Now all the data collected is
+	sorted by any ORDER BY condition in the query.  If it exists, q.getOrderBy() parses the query and looks for the clause.
+	
+	Return the logical plan for the query q.
 
 	Note: this method is rather long and complex.  Your walk thru should focus
 	on the high-level ideas.  Specifically, explain how SQL query is processed to construct the LogicalPlan.  
@@ -36,28 +48,84 @@ Walk thru 5: simpledb.LogicalPlan.physicalPlan()
 		- filterSelectivities
 		- statsMap
 		- subplanMap
-
-	<fill this in>
-
+		
+	Convert this LogicalPlan into a physicalPlan represented by a DbIterator. 
+	Attempts to find the optimal plan by using JoinOptimizer.orderJoins to order the joins in the plan.
+		
+	The method uses an iterator to go over all the tables.  It then opens a secScan on each and put the table name and secScan into
+	subplanMap.  Then it puts the table name and selectivity into filterSelectivity, making all selectivity defaulted to 1.0.
+	Next the method makes an iterator over the filers and gets all the subplans iterators from subplanMap.  It accesses the tupdesc
+	for each field and type.  Then it puts the table name and corresponding filter into subplanMap.  Then it gets the stats for the
+	table and uses it to calculate the selectivity with TableStats.estimateSelectivity().  Now it can put the table name with new 
+	selectivity (old * new) into filterSelectivity.  Next, it makes a new join optimizer and new iterator to iterate over all the 
+	joins.  It gets the table name connected with the join and the plans (from subplanMap).  Then it checks to see if the second 
+	plan it got is a subplan of the first one, it uses the join optimizer it made in the beginning to create a new DBIterator
+	from the join operation and the 2 plans.  If the second plan is not a subquery join then it puts both tables in equivMap to
+	keep track of new node that contains both tables.  It updates everything related to the second plan (t2) to be connected with 
+	the first plan (t1).  Next, the method walks the select list to determine the order to project the output fields.  For each
+	select it checks that the aggregate field is not null and gets outfield and outtypes for all selects.  If it hasAgg (checked
+	beforehand) then it creates a new node for it with groupings from the group by clause (if exists).  It also checks for any
+	order by clause and creates a new node if necessary for that too.  After all this, it finally returns a new project using 
+	outfield, outtype and node.
+	
+	
 Walk thru 6: simpledb.JoinOptimizer.orderJoins()
 
-	<fill this in>
+	The JoinOptimizer class is responsible for ordering a series of joins optimally, and for selecting the best instantiation of 
+	a join for a given logical plan.
+	
+	There is no code here so we are assuming we talk about what potential code will be doing...
+	This is basically what we covered in class.  What is the best way to join two tables so that it is most efficient (and least
+	cost).  We do this using subplans and dynamic programming. 
+	
+	input: R = {R1, R2, ..., Rn}
+	
+	size (Ri) = num tuples in Ri
+	plan (Ri) = secScan or index lookup (whatever is better)
+	cost (Ri) = cost(plan(Ri))
+	
+	for i=1 to n:
+		compute size(Ri), plan(Ri) and cost(Ri)
+	for d=2 to n:		//where d is size of subset
+		for S in all size d subset of R
+			cost(S)=infinity, plan(S)=null and size(S)=null
+			for each relation R in S:
+				S' = S-R
+				p = least cost join of plan(S') and plan(R)  //here we consider all join algorithms 
+				c = cost(p)
+				sz = size(plan(S') join plan(R))
+				if (c < cost(S)) 
+					cost(S) = c
+					plan(S) = p
+					size(S) = sz
 
 Walk thru 7: JoinOptimizer.computeCostAndCardOfSubplan()
 
-	<fill this in>
+	Returns a cost card object describing cost, cardinality and optimal subplan.
+	
+	This method gets the names of tables connected to the join, then it removes the set (jointoremove).  Next it check if the 
+	tables are base tables, and if they are then it estimates the scan cost and cardinality of t1 and t2 using the 
+	filterSelectivity hashmap.  If the tables are not both base relations then we look to the plan cache (pc) to the best way
+	to join.  Its possible that there is no cached answer (if subset includes a cross product) so then it returns null.  Otherwise
+	we join the table with the previous best option for the right subtree and estimate that cost, where the left side has cost
+	of the left subtree.  Then the method considers the option for the left side to be the previous best option, and goes through
+	similar cost analysis.  Then it estimates the cost of switching the outer and inner tables for the join and evaluates the cost.
+	Finally, a new cardcost instance is created, cost cardinality and plan are assigned to it and its returned.
 
 Walk thru 8: JoinOptimizer.estimateJoinCost()
 
-	<fill this in>
+	Join cost is measured in I/Os.  The estimation is a result of number of tuples in each table of the join, the selection 
+	factor we estimate beforehand and the algorithm we choose.  SimpleDB pushes filters down as far as possible so that eliminates
+	some options - generally the higher cost ones.  This method will evaluate the different algorithms and estimate the lowest 
+	cost to select the best join option.
 
 Walk thru 9: JoinOptimizer.estimateJoinCardinality()
 
-	<fill this in>
+	Join cardinality is the probability that any tuple in one relation matches one in the other.  We estimate this using the 
+	number of tuples and the selectivity factor.  That is calculated using 1/# distinct values of a in R.
 
 Walk thru 10 query.execute()
 	
 	Note: This is called inside simpledb.Parser.processNextStatement().  Refer back to Walk thru 2.
 
-	<fill this in>
-
+	This method basically starts the query parsing by going through all the tuples and making sure there is a next to operate on.
