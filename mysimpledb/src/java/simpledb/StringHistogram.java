@@ -6,6 +6,7 @@ package simpledb;
  */
 public class StringHistogram {
     final IntHistogram hist;
+    private int total;
 
     /**
      * Create a new StringHistogram with a specified number of buckets.
@@ -17,6 +18,7 @@ public class StringHistogram {
      */
     public StringHistogram(int buckets) {
         hist = new IntHistogram(buckets, minVal(), maxVal());
+        total=0;
     }
 
     /**
@@ -68,6 +70,11 @@ public class StringHistogram {
     public void addValue(String s) {
         int val = stringToInt(s);
         hist.addValue(val);
+        total++;
+    }
+    
+    public int totalVals() {
+    	return this.total;
     }
 
     /**
