@@ -121,21 +121,21 @@ public class TableStats {
 			}
 			//Now, we can initialize the histograms			
 			iter.rewind();
-			while (iter.hasNext()) {
-				Tuple tup = iter.next();
-				for (int i=0;i<num_fields;i++) {
-					Field f = tup.getField(i);
-					switch (f.getType()) {
-						case INT_TYPE: int low = mins[i];
-									   int high = maxs[i];
-									   histograms[i] = new IntHistogram(NUM_HIST_BINS, low, high);
+			//while (iter.hasNext()) {
+				Tuple t = iter.next();
+				for (int ii=0;ii<num_fields;ii++) {
+					Field fi = t.getField(ii);
+					switch (fi.getType()) {
+						case INT_TYPE: int low = mins[ii];
+									   int high = maxs[ii];
+									   histograms[ii] = new IntHistogram(NUM_HIST_BINS, low, high);
 									   break;
-						case STRING_TYPE: histograms[i] = new StringHistogram(NUM_HIST_BINS);
+						case STRING_TYPE: histograms[ii] = new StringHistogram(NUM_HIST_BINS);
 										break;
 						default: break;
 					}
 				}
-			}
+			//}
 			
 			//Finally, we can add values to the histograms
 			iter.rewind();
