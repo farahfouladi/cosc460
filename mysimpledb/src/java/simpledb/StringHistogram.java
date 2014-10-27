@@ -76,6 +76,10 @@ public class StringHistogram {
     public int totalVals() {
     	return this.total;
     }
+    
+    public int getDistinctVals() {
+    	return hist.getDistinctVals();
+    }
 
     /**
      * Estimate the selectivity (as a double between 0 and 1) of the specified

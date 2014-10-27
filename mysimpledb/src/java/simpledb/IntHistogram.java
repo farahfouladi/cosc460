@@ -11,6 +11,7 @@ public class IntHistogram {
 	
 	private double range;
 	private int total;
+	private int distinct_val;
 	
 	private int[] hist;
     /**
@@ -34,7 +35,7 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         
-        int distinct_val = max-min+1;
+        this.distinct_val = max-min+1;
         if (numB>distinct_val) {
         	numB = distinct_val;
         }
@@ -154,6 +155,10 @@ public class IntHistogram {
     
     public int totalVals() {
     	return this.total;
+    }
+    
+    public int getDistinctVals() {
+    	return this.distinct_val;
     }
 
     /**

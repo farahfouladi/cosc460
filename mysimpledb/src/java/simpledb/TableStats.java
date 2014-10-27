@@ -222,7 +222,13 @@ public class TableStats {
      * @return The number of distinct values of the field.
      */
     public int numDistinctValues(int field) {
-        // some code goes here
+        Object histogram = histograms[field];
+        if (histogram instanceof IntHistogram) {
+        	return ((IntHistogram)histogram).getDistinctVals();
+        }
+        if (histogram instanceof StringHistogram) {
+        	return ((StringHistogram)histogram).getDistinctVals();
+        }
         throw new UnsupportedOperationException("implement me");
 
     }
