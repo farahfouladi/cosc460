@@ -17,17 +17,38 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
-	private ArrayList<DbFile> tables;
-	private ArrayList<String> names;
-	private ArrayList<String> keys;
+	
+	private class TableInfo { 
+		private String name;
+		private String pkey;
+		
+		public TableInfo(String name, String pkey) {
+			this.name = name;
+			this.pkey = pkey;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public String getpkey() {
+			return pkey;
+		}
+ 	}
+	
+	private HashMap<Integer, TableInfo> map;
+	
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
+	
+	private HashMap<TableInfo,DbFile> files;
+	private HashMap<Integer, TableInfo> tables;
+	
     public Catalog() {
-        tables = new ArrayList<DbFile>();
-        names = new ArrayList<String>();
-        keys = new ArrayList<String>();
+        files = new HashMap<TableInfo,DbFile>();
+        tables = new HashMap<Integer,TableInfo>();
     }
 
     /**
@@ -41,18 +62,15 @@ public class Catalog {
      *                  conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-    	//adding all elements to the end of the list
-    	//System.out.println("Adding a table");
-    	//System.out.println("(file 3 fields) / tuple name = " + file.getTupleDesc().getFieldName(0));
-        tables.add(file);
-        names.add(name);
-        keys.add(pkeyField);
+    	if (name==null) { return; }
+    	if (pkeyField==null) { return; }
+    	
+    	TableInfo info = new TableInfo(name, pkeyField);
+    	files.put(info, file);
+    	tables.put(file.getId(), info);
     }
 
     public void addTable(DbFile file, String name) {
-    	//System.out.println("ADDING TABLE");
-    	//System.out.println("(file) 2 fields / tuple name = " + file.getTupleDesc().getFieldName(0));
-    	//System.out.println("(file) 2 fields / file id = " + file.getId());
     	addTable(file, name, "");
     }
 
@@ -74,18 +92,13 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        int ind;
-        DbFile file;
-        int id;
-    	try {
-        	ind = names.indexOf(name);
-        	file = tables.get(ind);
-        	id = file.getId();
+        for (TableInfo t : files.keySet()) {
+        	if (t.getName().equals(name)) {
+        		DbFile file = files.get(t);
+        		return file.getId();
+        	}
         }
-        catch(Exception e) {
-        	throw new NoSuchElementException();
-        }
-        return id;
+        throw new NoSuchElementException();
     }
 
     /**
@@ -96,31 +109,8 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        //System.out.println("start getTupleDesc");
-    	int i;
-        int size = tables.size();
-        TupleDesc td = null;
-    	DbFile file = null;
-        if (size==0) {
-        	throw new NoSuchElementException();
-        }
-        try {
-        	for (i=0;i<size;i++) {
-        		file = tables.get(i);
-        		//System.out.println(file.getId());
-        		//System.out.println(tableid);
-        		if (file.getId() == tableid) {
-        			td = file.getTupleDesc();
-        			//System.out.println("CATALOG: num fields " + td.numFields());
-        		}
-        	}
-            
-        }
-        catch(Exception e) {
-        	throw new NoSuchElementException();
-        }
-        //System.out.println("end getTupleDesc");
-        return td;
+        DbFile file = getDatabaseFile(tableid);
+        return file.getTupleDesc();
     }
 
     /**
@@ -131,89 +121,35 @@ public class Catalog {
      *                function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-        int i;
-        int size = tables.size();
-        //System.out.println("number of tables in file is " + size);
-    	DbFile file = null;
-    	DbFile fileToReturn = null;
-        if (size==0) {
-        	throw new NoSuchElementException();
-        }
-        try {
-        	for (i=0;i<size;i++) {
-        		file = tables.get(i);
-        		if (file.getId() == tableid) {
-        			fileToReturn = file;
-        			break;
-        		}
-        	}
-        }
-        catch(Exception e) {
-        	throw new NoSuchElementException();
-        }
-        return fileToReturn;
+    	if (!tables.containsKey(tableid)) {
+    		throw new NoSuchElementException();
+    	}
+    	TableInfo info = tables.get(tableid);
+    	if (!files.containsKey(info)) {
+    		throw new NoSuchElementException();
+    	}
+    	return files.get(info);
     }
 
     public String getPrimaryKey(int tableid) {
-        int i;
-        int size = tables.size();
-        int index = -1;
-    	DbFile file = null;
-    	String pkey;
-        if (size==0) {
-        	throw new NoSuchElementException();
-        }
-        try {
-        	for (i=0;i<size;i++) {
-        		file = tables.get(i);
-        		if (file.getId() == tableid) {
-        			index = i;
-        			break;
-        		}
-        	}
-        	pkey = keys.get(index);
-        }
-        catch(Exception e) {
-        	throw new NoSuchElementException();
-        }
-        return pkey;
+    	if (!tables.containsKey(tableid)) {
+    		throw new NoSuchElementException();
+    	}
+    	TableInfo info = tables.get(tableid);
+    	return info.getpkey();
     }
 
     public Iterator<Integer> tableIdIterator() {
-        Integer tableIds[] = new Integer[tables.size()];
-        int i;
-        for (i=0; i<tables.size(); i++) {
-        	DbFile file = tables.get(i);
-        	int id = file.getId();
-        	tableIds[i] = (Integer) id;
-        }
-        Iterator<Integer> it = Arrays.asList(tableIds).iterator();
-        return it;
+    	// ???????????
+    	return null;
     }
 
     public String getTableName(int id) {
-        int i;
-        int size = tables.size();
-        int index = -1;
-    	DbFile file = null;
-    	String name;
-        if (size==0) {
-        	throw new NoSuchElementException();
-        }
-        try {
-        	for (i=0;i<size;i++) {
-        		file = tables.get(i);
-        		if (file.getId() == id) {
-        			index = i;
-        			break;
-        		}
-        	}
-        	name = names.get(index);
-        }
-        catch(Exception e) {
-        	throw new NoSuchElementException();
-        }
-        return name;
+    	if (!tables.containsKey(id)) {
+    		throw new NoSuchElementException();
+    	}
+    	TableInfo info = tables.get(id);
+    	return info.getName();
     }
 
     /**

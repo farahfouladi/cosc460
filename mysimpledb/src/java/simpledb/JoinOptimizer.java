@@ -110,11 +110,9 @@ public class JoinOptimizer {
             // You do not need to implement proper support for these for Lab 4.
             return card1 + cost1 + cost2;
         } else {
-            // Insert your code here.
-            // HINT: You may need to use the variable "j" if you implemented
-            // a join algorithm that's more complicated than a basic
-            // nested-loops join.
-            return -1.0;
+            
+        	int num_tups_t1 = card1;
+        	return cost1 + num_tups_t1*cost2;
         }
     }
 
@@ -152,9 +150,21 @@ public class JoinOptimizer {
                                                    String field2PureName, int card1, int card2, boolean t1pkey,
                                                    boolean t2pkey, Map<String, TableStats> stats,
                                                    Map<String, Integer> tableAliasToId) {
-        int card = 1;
-        // some code goes here
-        return card <= 0 ? 1 : card;
+        switch (joinOp) {
+        	case NOT_EQUALS:
+        	case EQUALS:
+        		if (t1pkey) return card2;
+        		if (t2pkey) return card1;
+        		if (card1 > card2) return card1;
+        		return card2;
+        	case GREATER_THAN:
+        	case GREATER_THAN_OR_EQ:
+        	case LESS_THAN:
+        	case LESS_THAN_OR_EQ:
+        		return (int)((card1*card2)*0.3);
+        		// lab manual says we can assume 30% as the fixed fraction
+        }
+        return 0;
     }
 
     /**
@@ -208,13 +218,30 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-
-        // See the Lab 4 writeup for some hints as to how this function
-        // should work.
-
-        // some code goes here
-        //Replace the following
-        return joins;
+    	PlanCache pc = new PlanCache();
+    	int subsetSize = 1;
+    	for (subsetSize=1; subsetSize<=joins.size();subsetSize++) {
+    		for (Set<LogicalJoinNode> join : enumerateSubsets(joins, subsetSize)) {
+    			CostCard card = new CostCard();
+    			card.cost = Double.MAX_VALUE;
+    			
+    			for (LogicalJoinNode node : join) {
+    				CostCard newCard = computeCostAndCardOfSubplan(stats, filterSelectivities, node, join, card.cost, pc);
+    				if (newCard != null) {
+    					if (newCard.cost < card.cost) {
+    						card = newCard;
+    					}
+    					pc.addPlan(join, card.cost, card.card, card.plan);
+    				}
+    			}
+    		}
+    	}
+    	HashSet<LogicalJoinNode> orders = new HashSet<LogicalJoinNode>();
+        for (LogicalJoinNode node : joins) {
+        	orders.add(node);
+        }
+    	//use the plan cache helper method to order 
+        return pc.getOrder(orders);
     }
 
     // ===================== Private Methods =================================

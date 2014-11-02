@@ -257,5 +257,9 @@ public class TableStats {
     	}
         return 0.0;
     }
+    
+    public TupleDesc getTupleDesc() {
+    	return file.getTupleDesc();
+    }
 
 }
