@@ -5,21 +5,48 @@ Answer these questions.  With each question is a hint as to which part of the co
 
 (Walk thru 1) How many instances of the TableStats class are created?
 
+It depends on how many tables, for each table defined in the system catalog it computes the statistics.
+It does this by calling TableStats.computeStatistics() which creates a new tableStats object with its table id
+and I/Os.
+
 (Walk thru 4) In class, we said a logical plan is a relational algebra tree.  That's not how it's represented in SimpleDB.  How is it represented? 
+
+The SQL query is parsed and the information from each clause is collected and stored before any operations are executed.
+The method returns a logical plan at the end, but its more of a collection of data that answers individual clauses.
 
 (Walk thru 5) The physicalPlan is a relational algebra tree.  Describe the basic shape of this tree in terms of which ops go where.
 
+The tree is a left-deep tree, as that is the only one that simpleDB supports.  The filters are pushed as far down as possible 
+and then the joins are taken care of in a different method.
+
 (Walk thru 5) Suppose a query applies multiple filters to a single table.  For example, the query described in the lab write up filters on both actor first and last name.  In such cases, how is the selectivity estimated?  
+
+If there are multiple filters, then its just the selectivities multiplied together to get the final one.
 
 (Walk thru 5) Explain the meaning of this if statement.  Why should the subplanMap have size 0 or 1 at this point?
 
     if (subplanMap.size() > 1) {
         throw new ParsingException("Query does not include join expressions joining all nodes!");
     }
+    
+Because the join should have taken place, meaning that all the subplans are connected to one node.  If there is more than one 
+node, then the two tables were either not joined or not joined completely.  The subplanMap hold the options for a given set, so it 
+should just have one plan once the tables are joined.
 
 (Walk thru 7) What does computeCostAndCardOfSubplan do when the joinSet contains only a single join, the joinToRemove?
 
+It accesses the planCache and looks up the cost and cardinality of that single join in the cache.
+
 (Walk thru 9) Suppose we are considering a join between a table A and the result of a join between B and C.  Assume table A is the outer relation in the join.  What is the cost estimate?  Your expression should be in terms of the sizes (# pages, # tuples) of the base relations A, B, C.
 
+It depends on what algorithm you choose to use.  Since simpleDB pushes the selections down we can start with that. 
+((#pg in B) + (#pg in C + (selection factor * #pg in C)) + (#pg after any selection) then that is joined with A so, the same thing
+((#pg in previous join) +(#pg in A + (selection factor * #pg in A)).  The number of tuples is used to calculate the selection factor.
+
+
 (Walk thru 10) In lab 3, you write Join and Filter operators.  Both of these support the DbIterator interface.  When/where are these iterators called?
+
+When the method executes operators, it makes iterators to go through the tuples in each table.  For both join and filter,
+the iterator is used as a pointer to assess different tuples.  They are called after execute() once the the operation has
+been parsed and data has been collected.
 
