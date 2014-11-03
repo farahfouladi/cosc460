@@ -521,15 +521,21 @@ public class Parser {
                             + curtrans.getId().getId());
                 }
                 try {
-                    if (s instanceof ZInsert)
+                    if (s instanceof ZInsert) {
+                    	System.out.println("here insert");
                         query = handleInsertStatement((ZInsert) s,
                                 curtrans.getId());
-                    else if (s instanceof ZDelete)
+                    }
+                    else if (s instanceof ZDelete) {
+                    	System.out.println("here delete");
                         query = handleDeleteStatement((ZDelete) s,
                                 curtrans.getId());
-                    else if (s instanceof ZQuery)
+                    }
+                    else if (s instanceof ZQuery){
+                    	System.out.println("here query");
                         query = handleQueryStatement((ZQuery) s,
                                 curtrans.getId());
+                    }
                     else {
                         System.out
                                 .println("Can't parse "

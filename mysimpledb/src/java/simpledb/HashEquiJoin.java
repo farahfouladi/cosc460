@@ -17,10 +17,11 @@ public class HashEquiJoin extends Operator {
      * @param child1 Iterator for the left(outer) relation to join
      * @param child2 Iterator for the right(inner) relation to join
      */
+
     public HashEquiJoin(JoinPredicate p, DbIterator child1, DbIterator child2) {
         // some code goes here
+        throw new UnsupportedOperationException();
     }
-
     public JoinPredicate getJoinPredicate() {
         // some code goes here
         return null;

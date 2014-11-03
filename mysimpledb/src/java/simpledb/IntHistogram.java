@@ -11,6 +11,7 @@ public class IntHistogram {
 	
 	private double range;
 	private int total;
+	private int distinct_val;
 	
 	private int[] hist;
     /**
@@ -34,12 +35,12 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         
-        int distinct_val = max-min+1;
+        this.distinct_val = max-min+1;
         if (numB>distinct_val) {
         	numB = distinct_val;
         }
-        System.out.println("numB = "+ numB);
-        System.out.println("distict values = "+ distinct_val);
+        //System.out.println("numB = "+ numB);
+        //System.out.println("distict values = "+ distinct_val);
         this.range = distinct_val/numB;
         this.total = 0;
         
@@ -142,14 +143,22 @@ public class IntHistogram {
 			   				for (int i=0;i<index;i++) {
 			   					num += hist[i];
 			   				}
-			   				// add equivalent within bucket less than (could also be 1 - >= ?? )
-			   				return (double)num/total;
+			   				return 1 - estimateSelectivity(Predicate.Op.GREATER_THAN_OR_EQ, v);// add equivalent within bucket less than (could also be 1 - >= ?? )
+			   				//return (double)num/total;
     		case GREATER_THAN_OR_EQ:return estimateSelectivity(Predicate.Op.EQUALS, v) + estimateSelectivity(Predicate.Op.GREATER_THAN, v);   
     		case LESS_THAN_OR_EQ: return estimateSelectivity(Predicate.Op.EQUALS, v) + estimateSelectivity(Predicate.Op.LESS_THAN, v);
     		case NOT_EQUALS: return 1 - estimateSelectivity(Predicate.Op.EQUALS, v);
     	}
         System.out.println("hi at end of eS (sis not return)");
         return -1.0;
+    }
+    
+    public int totalVals() {
+    	return this.total;
+    }
+    
+    public int getDistinctVals() {
+    	return this.distinct_val;
     }
 
     /**
