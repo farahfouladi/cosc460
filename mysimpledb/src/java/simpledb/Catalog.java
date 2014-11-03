@@ -140,8 +140,14 @@ public class Catalog {
     }
 
     public Iterator<Integer> tableIdIterator() {
-    	// ???????????
-    	return null;
+    	Set<Integer> ids = tables.keySet();
+    	Integer[] arr = new Integer[ids.size()];
+    	int index = 0;
+    	for (Integer id : ids) {
+    		arr[index] = id;
+    		index++;
+    	}
+    	return Arrays.asList(arr).iterator();
     }
 
     public String getTableName(int id) {
