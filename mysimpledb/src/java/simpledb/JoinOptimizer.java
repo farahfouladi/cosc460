@@ -236,6 +236,11 @@ public class JoinOptimizer {
     			}
     		}
     	}
+    	
+    	if (explain) {
+    		printJoins(joins,pc,stats,filterSelectivities);
+    	}
+    	
     	HashSet<LogicalJoinNode> orders = new HashSet<LogicalJoinNode>();
         for (LogicalJoinNode node : joins) {
         	orders.add(node);

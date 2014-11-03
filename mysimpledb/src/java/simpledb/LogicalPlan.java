@@ -375,12 +375,12 @@ public class LogicalPlan {
 
         Iterator<LogicalJoinNode> joinIt = joins.iterator();
         while (joinIt.hasNext()) {
+        	System.out.println("WHILE LOOP");
             LogicalJoinNode lj = joinIt.next();
             DbIterator plan1;
             DbIterator plan2;
             boolean isSubqueryJoin = lj instanceof LogicalSubplanJoinNode;
             String t1name, t2name;
-
             if (equivMap.get(lj.t1Alias) != null)
                 t1name = equivMap.get(lj.t1Alias);
             else
@@ -408,9 +408,13 @@ public class LogicalPlan {
 
             DbIterator j;
             j = jo.instantiateJoin(lj, plan1, plan2);
+
+
+
             subplanMap.put(t1name, j);
 
             if (!isSubqueryJoin) {
+
                 subplanMap.remove(t2name);
                 equivMap.put(t2name, t1name);  //keep track of the fact that this new node contains both tables
                 //make sure anything that was equiv to lj.t2 (which we are just removed) is
@@ -421,7 +425,6 @@ public class LogicalPlan {
                         s.setValue(t1name);
                     }
                 }
-
                 // subplanMap.put(lj.t2, j);
             }
 
@@ -432,7 +435,6 @@ public class LogicalPlan {
         }
 
         DbIterator node = (DbIterator) (subplanMap.entrySet().iterator().next().getValue());
-
         //walk the select list, to determine order in which to project output fields
         ArrayList<Integer> outFields = new ArrayList<Integer>();
         ArrayList<Type> outTypes = new ArrayList<Type>();
