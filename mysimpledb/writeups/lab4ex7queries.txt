@@ -8,22 +8,78 @@ from Actor a, Casts c, Movie_Director m, Director d
 where a.id=c.pid and c.mid=m.mid and m.did=d.id 
 and a.fname='Ginger' and a.lname='Rogers';
 
-Query 1 optimizer's plan:
+Query 1 optimizer's plan: 
+                            π(d.fname,d.lname),card:29729
+                            |
+                            ⨝(a.id=c.pid),card:29729
+  __________________________|___________________________
+  |                                                    |
+  σ(a.lname=Rogers),card:1                             ⨝(m.mid=c.mid),card:29729
+  |                                    ________________|_________________
+  σ(a.fname=Ginger),card:1             |                                |
+  |                                    ⨝(d.id=m.did),card:2791          |
+  |                           _________|_________                       |
+  |                           |                 |                     scan(Casts c)
+scan(Actor a)               scan(Director d)  scan(Movie_Director m)
 
-<fill in here>
+d.fname	d.lname	
+------------------------
+Bill	Foster
+Bill	Foster
+Louis	Lewyn
+
+ 3 rows.
+Transaction 6 committed.
+
 
 Query 1 plan explanation:
 
-<fill in here>
+The join optimizer is suppose to create the best plan (least cost) for any given query.  It pushes the selects down 
+as far as possible, as we see on the left most side.  Then when we look at the right side of the tree, we see that 
+Simple DB did make a left-deep plan where Director d and Movie-Director m are joined and then that output is joined
+with Casts c and that result is joined with the filters on the left side.  This plan gave the lowest cost of the joins
+between the tables.
+
 
 Query 2:
 
-<fill in here>
+select m.name 
+from Movie m, Actor a, Casts c, Movie_Director md
+where a.lname='Pitt'
+and m.id=md.mid and m.id=c.mid and c.pid=a.id;
 
-Query 1 optimizer's plan:
 
-<fill in here>
+Query 2 optimizer's plan:
 
-Query 1 plan explanation:
+                         π(m.name),card:2791
+                         |
+                         ⨝(a.id=c.pid),card:2791
+  _______________________|________________________
+  |                                              |
+  σ(a.lname=Pitt),card:1                         ⨝(m.id=md.mid),card:2791
+  |                                ______________|______________
+  |                                |                           |
+  |                                ⨝(m.id=c.mid),card:29729    |
+  |                         _______|________                   |
+  |                         |              |                 scan(Movie_Director md)
+scan(Actor a)             scan(Movie m)  scan(Casts c)
 
-<fill in here>
+m.name	
+-----------
+The Lair of the White Worm
+Liver
+House of Character
+Dominator
+
+ 4 rows.
+Transaction 12 committed.
+----------------
+465.18 seconds
+
+
+
+Query 2 plan explanation:
+
+Much like the first query, the program pushed down the select on last name 'Pitt' and then created a left-deep tree
+to optimize the joins.  The cardinality is estimated based on the tables involved in the joins.  The program ran 
+though the possible options and determined the best plan (above) based on least cost.
