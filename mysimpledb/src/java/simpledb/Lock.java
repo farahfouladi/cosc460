@@ -12,6 +12,8 @@ public class Lock {
 	public Lock(int id, String type) {
 		this.id = id;
 		this.type = type;
+		lockedTxns = new ArrayList<Integer>();
+		txnRequests = new LinkedList<Integer>();
 	}
 	
 	public int getId() {
