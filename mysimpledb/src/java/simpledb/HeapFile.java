@@ -143,11 +143,14 @@ public class HeapFile implements DbFile {
     	int total_pages = numPages();
     	int i;
     	int id = getId();
+    	HeapPage pg;
     	HeapPageId hpId;
     	boolean flag = false;
     	for (i=0;i<total_pages;i++) {
     		hpId = new HeapPageId(id, i);
-    		HeapPage pg = (HeapPage) Database.getBufferPool().getPage(tid,hpId,Permissions.READ_ONLY);
+    		synchronized(this) {
+    			pg = (HeapPage) Database.getBufferPool().getPage(tid,hpId,Permissions.READ_ONLY);
+    		}
     		if (pg.getNumEmptySlots() != 0) { 
     			pg.insertTuple(t);
     			writePage(pg);
@@ -160,7 +163,7 @@ public class HeapFile implements DbFile {
     		hpId = new HeapPageId(getId(), numPages());
     		HeapPage new_pg = new HeapPage(hpId, HeapPage.createEmptyPageData());
     		new_pg.insertTuple(t);
-    		writePage(new_pg);
+    		//writePage(new_pg);
     		list.add(new_pg);
     	}
         return list;
@@ -171,9 +174,12 @@ public class HeapFile implements DbFile {
             TransactionAbortedException {
     	ArrayList<Page> list = new ArrayList<Page>();
         PageId pid = t.getRecordId().getPageId();
-        HeapPage pg = (HeapPage) Database.getBufferPool().getPage(tid,pid,Permissions.READ_ONLY);
-        pg.deleteTuple(t);
-        list.add(pg);
+        HeapPage pg;
+        synchronized(this) {
+        	pg = (HeapPage) Database.getBufferPool().getPage(tid,pid,Permissions.READ_ONLY);
+        	pg.deleteTuple(t);
+        	list.add(pg);
+        }
         return list;
     }
 

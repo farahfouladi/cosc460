@@ -79,15 +79,9 @@ public class BufferPool {
             throws TransactionAbortedException, DbException {
         Page page = null;
         pageAccessTime.put(System.currentTimeMillis(), pid);
-        System.out.println("\n Requesting Lock:");
-        synchronized(pid) {
-        	boolean flag = true;
-        	// busy loop until lock is available
-        	while (flag) {
-        		if (lm.requestLock(pid, tid, perm)) { break;}
-        	} 	
+        lm.requestLock(pid, tid, perm);
+        synchronized(this) { //make bufferpool update atomic 
         	if(bpool.containsKey(pid)){
-        		//System.out.println("page is in buffer pool!");
         		page = bpool.get(pid);
         	}
         	else {
@@ -96,8 +90,8 @@ public class BufferPool {
         		page = dbFile.readPage(pid);
         		bpool.put(pid, page);
         	}
-        	return page;
         }
+        return page;
     }
     
 
@@ -112,13 +106,16 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-         Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
+    	 Lock lock = lm.getLockTable().get(pid.hashCode());
+         //Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
          
          int i = lock.getTransactions().indexOf(tid.hashCode());
          lock.getTransactions().remove(i);
          
          int j = lm.getLockedPages().get(tid.hashCode()).indexOf(pid.hashCode());
          lm.getLockedPages().get(tid.hashCode()).remove(j);
+         
+         System.out.println("RELEASE: Transaction " + tid.hashCode() + " is releasing lock " + pid.hashCode());
     }
 
     /**
@@ -134,8 +131,8 @@ public class BufferPool {
     /**
      * Return true if the specified transaction has a lock on the specified page
      */
-    public boolean holdsLock(TransactionId tid, PageId p) {                                                       // cosc460
-        return false;
+    public boolean holdsLock(TransactionId tid, PageId p) {                                                      
+    	return lm.holdsLock(p.hashCode(), tid.hashCode());
     }
 
     /**
