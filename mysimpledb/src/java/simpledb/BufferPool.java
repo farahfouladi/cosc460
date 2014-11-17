@@ -37,6 +37,7 @@ public class BufferPool {
     private int numPages;
     private Hashtable<PageId, Long> pageAccessTime;
     private long timeAccessed;
+    private LockManager lm;
    
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -48,6 +49,7 @@ public class BufferPool {
         bpool = new Hashtable<PageId, Page>();
         pageAccessTime = new Hashtable<PageId, Long>();
         this.numPages = numPages;
+        lm = new LockManager();
     }
 
     public static int getPageSize() {
@@ -77,6 +79,7 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
         Page page = null;
+<<<<<<< HEAD
         if(bpool.containsKey(pid)){
         	//System.out.println("page is in buffer pool!");
             page = bpool.get(pid);
@@ -92,6 +95,28 @@ public class BufferPool {
 
         }
         return page;
+=======
+        pageAccessTime.put(System.currentTimeMillis(), pid);
+        System.out.println("\n Requesting Lock:");
+        synchronized(pid) {
+        	boolean flag = true;
+        	// busy loop until lock is available
+        	while (flag) {
+        		if (lm.requestLock(pid, tid, perm)) { break;}
+        	} 	
+        	if(bpool.containsKey(pid)){
+        		//System.out.println("page is in buffer pool!");
+        		page = bpool.get(pid);
+        	}
+        	else {
+        		int tableid = pid.getTableId();
+        		DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
+        		page = dbFile.readPage(pid);
+        		bpool.put(pid, page);
+        	}
+        	return page;
+        }
+>>>>>>> f128346088df93ff38e4c53e2aeb71af5768aa6e
     }
     
 
@@ -106,8 +131,13 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+         Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
+         
+         int i = lock.getTransactions().indexOf(tid.hashCode());
+         lock.getTransactions().remove(i);
+         
+         int j = lm.getLockedPages().get(tid.hashCode()).indexOf(pid.hashCode());
+         lm.getLockedPages().get(tid.hashCode()).remove(j);
     }
 
     /**
@@ -123,9 +153,7 @@ public class BufferPool {
     /**
      * Return true if the specified transaction has a lock on the specified page
      */
-    public boolean holdsLock(TransactionId tid, PageId p) {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+    public boolean holdsLock(TransactionId tid, PageId p) {                                                       // cosc460
         return false;
     }
 
