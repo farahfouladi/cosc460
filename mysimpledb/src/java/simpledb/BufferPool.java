@@ -34,7 +34,7 @@ public class BufferPool {
     public static final int DEFAULT_PAGES = 50;
     private Hashtable<PageId, Page> bpool;
     private int numPages;
-    private Hashtable<Long, PageId> pageAccessTime;
+    private Hashtable<PageId, Long> pageAccessTime;
     private long timeAccessed;
     private LockManager lm;
    
@@ -46,7 +46,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         //bp_pages = new Page[numPages]; -- didn't use numPages...
         bpool = new Hashtable<PageId, Page>();
-        pageAccessTime = new Hashtable<Long, PageId>();
+        pageAccessTime = new Hashtable<PageId, Long>();
         this.numPages = numPages;
         lm = new LockManager();
     }
@@ -78,7 +78,6 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
         Page page = null;
-        pageAccessTime.put(System.currentTimeMillis(), pid);
         lm.requestLock(pid, tid, perm);
         synchronized(this) { //make bufferpool update atomic 
         	if(bpool.containsKey(pid)){
@@ -86,9 +85,12 @@ public class BufferPool {
         	}
         	else {
         		int tableid = pid.getTableId();
-        		DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
-        		page = dbFile.readPage(pid);
+        		page = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
+        		if (bpool.size() >= numPages) {
+        			this.evictPage();
+        		}
         		bpool.put(pid, page);
+        		pageAccessTime.put(pid, System.currentTimeMillis());
         	}
         }
         return page;
