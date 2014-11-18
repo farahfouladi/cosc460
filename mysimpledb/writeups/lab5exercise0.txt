@@ -2,17 +2,47 @@ Your name(s):
 
 1. Explain how you modified SynchronizedThreads in exercise 1.
 
+Code implemented modifies the Incrementer class.  This locks the object counter, thus only allowing one
+thread to access the object at a time.
+
 2. Briefly describe (1-2 sentences) an alternate implementation for exercise 1.
+
+To modify the Counter class, we added synchronize the increment method.  This ensures that only one thread
+enters the method at a time.
 
 3. Exercise 2: Explain the deadlock that happens in Deadlock in terms of locks and threads waiting on locks. The two threads in this case are alphonse and gaston. 
 
+Two threads are created and calls bow() on one of the friends, with bowback requiring the other.  In order
+to exit bow, they need a bowBack from the other, but neither can bow back because they initiated their
+own bow. 
+
 a) What objects are being locked? 
+
+When a thread invokes a synchronized method, it acquires the intrinsic lock for that method's object.  
+In this case, the method is locking the Friend object.  This means that bowBack cannot be called on bower
+since bower is the other Friend object and it is locked in its own method of bow.
 
 b) Who has what locks? 
 
+Initially, each Friend object has a lock on itself, preventing each one from calling bowBack on the other.
+
 c) How does deadlock occur?
+
+When two or more threads are waiting on each other and neither can release their lock due to the lock on 
+another thread.
 
 4. Return to exercise 1, can deadlock occur here?  Explain why or why not.
 
-5. Explain why acquireLock uses a synchronized statement inside the body of the method. In other words, why not just make the acquireLock method synchronized, just like releaseLock? Will this work? Why or why not?
+No, there is no chance for deadlock here because there is no dependency on another thread unlocking 
+for the any other thread to continue executing.
+
+5. Explain why acquireLock uses a synchronized statement inside the body of the method. In other words, 
+why not just make the acquireLock method synchronized, just like releaseLock? Will this work? Why or 
+why not?
+	
+Threads need to come into the acquireLock method so that they can enter the while(waiting) loop.  This 
+allows them to keep checking so often if the lock is available, thus letting the thread continue
+to execute.  If you synchronize the entire method then the threads have no inherent way of coming back to 
+check if they can enter the method to execute their mission.
+	
 	

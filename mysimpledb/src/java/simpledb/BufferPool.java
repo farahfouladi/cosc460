@@ -230,12 +230,19 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-    	Page pageFlusher = bpool.get(pid);
-    	if(pageFlusher.isDirty() != null){
-    		Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(pageFlusher);
+    	// only call this on dirty page to evict
+    	if (pid == null) {
+    		throw new NullPointerException();
     	}
+    	//System.out.println("This is a page: " + bpool.get(pid));
+    	Page pagetoFlush = bpool.get(pid);
+    	if (pagetoFlush.isDirty() != null) {
+	    	Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(pagetoFlush);
+	    	pagetoFlush.markDirty(false, pagetoFlush.isDirty());
+    	}
+   
     }
-
+    
     /**
      * Write all pages of the specified transaction to disk.
      */
@@ -249,47 +256,36 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
-    	//are there any clean pages?
-    	boolean success = false;
-    	boolean cleanPages = false; 		//cleanPages starts at false
-    	int numPgs = 0;
-    	Collection<Page> pages = bpool.values();
-    	for(Page pg : pages) {
-    		if(pg.isDirty() == null) {
-    			cleanPages = true;
-    			break;
-    		}
-    		else {
-    			numPgs += 1;
-    		}
-    	}
-    	if(cleanPages && numPgs == numPages) {
-    		throw new DbException("pages are dirty");
-    	}
-    	while(!success) {
-    		PageId evicted = null;
-    		int longestTime = 0;
-    		long curr_time = System.currentTimeMillis();
-    		Collection<Long> times = pageAccessTime.keySet();
-    		for(Long page_time : times) {
-    			long temp = (curr_time - page_time);
-    			if(temp > longestTime) {
-    				evicted = pageAccessTime.get(page_time);
-    			}
-    		}
-    		Page isPageDirty = bpool.get(evicted);
-    		if(isPageDirty.isDirty() == null){
-                try {
-	                flushPage(evicted);
-	                bpool.remove(evicted);
-	                success = true;
-                } 
-                catch (IOException e) {
-	                System.out.println(e.getMessage());
-	                e.printStackTrace();
-                }   
-            }
-    	}
+    	
+		PageId evicted = null;
+		long longestTime = 0;
+		long curr_time = System.currentTimeMillis();
+		Collection<PageId> allPages = pageAccessTime.keySet();
+		for(PageId pg : allPages) {
+			
+			long temp = (curr_time - pageAccessTime.get(pg));
+			if(temp > longestTime) {			// if we find an older page
+			    evicted = pg;					// set pid to be evicted
+			    longestTime = temp;
+			}
+		}
+		if (evicted == null) {
+			throw new DbException("All pages are dirty.");
+		}
+		else try {
+			//System.out.println("evicted null" + evicted);
+			//System.out.println("NULL??" + bpool.get(evicted));
+        	//System.out.println("calling flushpage");
+        	if (bpool.containsKey(evicted)) {
+	            flushPage(evicted);
+	            bpool.remove(evicted);
+	            pageAccessTime.remove(evicted);
+        	}
+    } 
+        catch (IOException e) {
+            e.printStackTrace();
+        }   
+           
     }
 
 }
