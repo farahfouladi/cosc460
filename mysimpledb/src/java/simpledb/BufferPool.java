@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,7 +34,7 @@ public class BufferPool {
     public static final int DEFAULT_PAGES = 50;
     private Hashtable<PageId, Page> bpool;
     private int numPages;
-    private Hashtable<PageId, Long> pageAccessTime;
+    private Hashtable<Long, PageId> pageAccessTime;
     private long timeAccessed;
     private LockManager lm;
    
@@ -47,7 +46,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         //bp_pages = new Page[numPages]; -- didn't use numPages...
         bpool = new Hashtable<PageId, Page>();
-        pageAccessTime = new Hashtable<PageId, Long>();
+        pageAccessTime = new Hashtable<Long, PageId>();
         this.numPages = numPages;
         lm = new LockManager();
     }
@@ -79,7 +78,7 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
         Page page = null;
-        pageAccessTime.put(pid, System.currentTimeMillis());
+        pageAccessTime.put(System.currentTimeMillis(), pid);
         lm.requestLock(pid, tid, perm);
         synchronized(this) { //make bufferpool update atomic 
         	if(bpool.containsKey(pid)){
@@ -87,17 +86,14 @@ public class BufferPool {
         	}
         	else {
         		int tableid = pid.getTableId();
-                page = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
-                if (bpool.size() >= numPages-1) {
-                	this.evictPage();
-                }
-                bpool.put(pid, page);
-                pageAccessTime.put(pid, System.currentTimeMillis());
+        		DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
+        		page = dbFile.readPage(pid);
+        		bpool.put(pid, page);
         	}
         }
         return page;
     }
-    	
+    
 
 
     /**
@@ -204,14 +200,16 @@ public class BufferPool {
 			 page.markDirty(true,tid);
 		 }
     }
+
     /**
      * Flush all dirty pages to disk.
      * NB: Be careful using this routine -- it writes dirty data to disk so will
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-    	for(PageId pid : bpool.keySet()){
-			flushPage(pid);
+    	Set<PageId> allPids = bpool.keySet();
+    	for(PageId pid : allPids){
+            flushPage(pid);
     	}
     }
 
