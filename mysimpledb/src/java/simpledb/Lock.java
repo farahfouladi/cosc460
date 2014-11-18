@@ -31,6 +31,10 @@ public class Lock {
 	public String getType() {
 		return type;
 	}
+	
+	public void setType(String type) {
+		this.type = type;
+	}
 
 	public Queue<Integer> getRequests() {
 		return txnRequests;
