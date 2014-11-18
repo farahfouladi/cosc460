@@ -79,46 +79,25 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
         Page page = null;
-<<<<<<< HEAD
-        if(bpool.containsKey(pid)){
-        	//System.out.println("page is in buffer pool!");
-            page = bpool.get(pid);
-        }
-        else {
-            int tableid = pid.getTableId();
-            page = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
-            if (bpool.size() >= numPages-1) {
-            	this.evictPage();
-            }
-            bpool.put(pid, page);
-            pageAccessTime.put(pid, System.currentTimeMillis());
-
-        }
-        return page;
-=======
-        pageAccessTime.put(System.currentTimeMillis(), pid);
-        System.out.println("\n Requesting Lock:");
-        synchronized(pid) {
-        	boolean flag = true;
-        	// busy loop until lock is available
-        	while (flag) {
-        		if (lm.requestLock(pid, tid, perm)) { break;}
-        	} 	
+        pageAccessTime.put(pid, System.currentTimeMillis());
+        lm.requestLock(pid, tid, perm);
+        synchronized(this) { //make bufferpool update atomic 
         	if(bpool.containsKey(pid)){
-        		//System.out.println("page is in buffer pool!");
         		page = bpool.get(pid);
         	}
         	else {
         		int tableid = pid.getTableId();
-        		DbFile dbFile = Database.getCatalog().getDatabaseFile(tableid);
-        		page = dbFile.readPage(pid);
-        		bpool.put(pid, page);
+                page = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
+                if (bpool.size() >= numPages-1) {
+                	this.evictPage();
+                }
+                bpool.put(pid, page);
+                pageAccessTime.put(pid, System.currentTimeMillis());
         	}
-        	return page;
         }
->>>>>>> f128346088df93ff38e4c53e2aeb71af5768aa6e
+        return page;
     }
-    
+    	
 
 
     /**
@@ -131,13 +110,16 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-         Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
+    	 Lock lock = lm.getLockTable().get(pid.hashCode());
+         //Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
          
          int i = lock.getTransactions().indexOf(tid.hashCode());
          lock.getTransactions().remove(i);
          
          int j = lm.getLockedPages().get(tid.hashCode()).indexOf(pid.hashCode());
          lm.getLockedPages().get(tid.hashCode()).remove(j);
+         
+         System.out.println("RELEASE: Transaction " + tid.hashCode() + " is releasing lock " + pid.hashCode());
     }
 
     /**
@@ -153,8 +135,8 @@ public class BufferPool {
     /**
      * Return true if the specified transaction has a lock on the specified page
      */
-    public boolean holdsLock(TransactionId tid, PageId p) {                                                       // cosc460
-        return false;
+    public boolean holdsLock(TransactionId tid, PageId p) {                                                      
+    	return lm.holdsLock(p.hashCode(), tid.hashCode());
     }
 
     /**
@@ -222,7 +204,6 @@ public class BufferPool {
 			 page.markDirty(true,tid);
 		 }
     }
-
     /**
      * Flush all dirty pages to disk.
      * NB: Be careful using this routine -- it writes dirty data to disk so will
@@ -255,10 +236,7 @@ public class BufferPool {
     	if (pid == null) {
     		throw new NullPointerException();
     	}
-//    	if (!bpool.containsKey(pid)) {
-//    		throw new NoSuchElementException("Page is not in buffer pool.");
-//    	}
-    	System.out.println("This is a page: " + bpool.get(pid));
+    	//System.out.println("This is a page: " + bpool.get(pid));
     	Page pagetoFlush = bpool.get(pid);
     	if (pagetoFlush.isDirty() != null) {
 	    	Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(pagetoFlush);
@@ -297,9 +275,9 @@ public class BufferPool {
 			throw new DbException("All pages are dirty.");
 		}
 		else try {
-			System.out.println("evicted null" + evicted);
-			System.out.println("NULL??" + bpool.get(evicted));
-        	System.out.println("calling flushpage");
+			//System.out.println("evicted null" + evicted);
+			//System.out.println("NULL??" + bpool.get(evicted));
+        	//System.out.println("calling flushpage");
         	if (bpool.containsKey(evicted)) {
 	            flushPage(evicted);
 	            bpool.remove(evicted);
