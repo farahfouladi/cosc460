@@ -43,7 +43,8 @@ public class LockManager {
     					//update tables to accommodate the new txn
     					makeNewTxn(tid);
     				}
-    				lock.addTransaction(tid); 
+    				lock.addTransaction(tid);
+    				waitedForLock(tid,pid);
     				lockedPages.get(tid).add(pid);
     				return true;
     			}
@@ -79,6 +80,7 @@ public class LockManager {
     					makeNewTxn(tid);
     				}
     				lock.addTransaction(tid);
+    				waitedForLock(tid, pid);
     				lockedPages.get(tid).add(pid);
     				return true;
     			}
@@ -102,6 +104,13 @@ public class LockManager {
    }
 		
 
+	private void waitedForLock(TransactionId tid, PageId pid) {
+		for (PageId pageid : waitingForPages.get(tid)) {
+			if (pageid == pid) {
+				waitingForPages.remove(pid);
+			}
+		}
+	}
 
 	
 	public boolean holdsLock(PageId pid, TransactionId tid){
