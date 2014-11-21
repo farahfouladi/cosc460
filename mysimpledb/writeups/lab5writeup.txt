@@ -5,38 +5,53 @@ After you complete lab 5, please answer the following questions.
 
 1. What is your name?  If you work with a partner, be sure to write both of your names.
 
-	(Replace this text with your answer)
+	Farah Fouladi + Lauren Yeary
 
 2. What did you think of this assignment?
 
-	(Replace this text with your answer)
+	It was helpful to work with threads and locks.  However it was really annoying to do because we had to go back 
+	and redo so much of our old code.  It almost felt like a lot of what we had implemented before was a complete waste of 
+	time because we essentially re-wrote it all.  It would have been nicer to have more constraints for the earlier labs
+	so that we weren't wasting our time building something that was going to be completely useless by lab 5.  Also the 
+	testing for this lab was really hard to understand and basically useless.
 
 3. What was the hardest part of this assignment?
 
-	(Replace this text with your answer)
+	Testing the code.  Print statements are great for threads, so debugging wasn't even the worst. It was just the 
+	tests.
 
 4. Describe any missing or incomplete elements of your code.
 
-	(Replace this text with your answer)
+	
 
 5. Roughly how long did you spend working on this lab?
 
-	(Replace this text with your answer)
+	Between 12 and 16 hours.
 
 6. Describe your lock manager implementation.  Here are some specific questions to answer:
 
 a) Where is your lock manager located?  (I.e., is it a separate class, part of BufferPool, etc.)
 
-	(Replace this text with your answer)
+	Our lock manager is a separate class.  It is also connected to another separate class, Lock.  These two hold
+	all the information for locks and the use of locks.
 
 b) What specific information do you store and how do you store it?  
 
-	(Replace this text with your answer)
+	We stored a bunch of information in hashtables.  So one was from page to lock, to determine what type of lock was 
+	on each page.  Then tid to a list of pids, that stored all the pages a specific transaction has touched.  The last is 
+	a list of pids that a transaction is waiting to acquire a lock on.  We also store the type of lock and how many locks
+	are on a page.
 
 c) Briefly describe what happens when a new transaction requests a page.  I.e., walk thru how the lock manager decides whether or not to grant the request.  Your description should reference the data structures that describe in part (b).
 
-	(Replace this text with your answer)
+	It calls get page which requires a lock.  It then goes to the lock manager and that determines what type, if any, lock 
+	is available to the transaction.  It then updates the appropriate and relevant information.  Then back in get page, it
+	runs through the timeout check.  A timeout would cause an abort.  If not then it gets the page from the bufferpool
+	or the disk, depending on if its already in bufferpool.  Then it updates all the information in bufferpool and proceeds.
 
 d) Briefly explain how you manage locks when inserting a tuple into a HeapFile.  In particular, how do you acquire/release locks when looking for a page to insert.
 
-	(Replace this text with your answer)
+	We had to go back and redo some code for this.  We have a method that looks through pages with a read-only lock.  If it 
+	finds one wiht an empty spot then it upgrades its lock, inserts the tuple and marks the page as dirty.  If not then it 
+	creates a new page and adds that to disk.  It returns the new page to insert and then the insert method adds the tuple
+	and marks the page as dirty.
