@@ -31,7 +31,7 @@ public class LockManager {
         boolean waiting = true;
 		while (waiting) {
 			synchronized(this) {
-				System.out.println("Txn: "+tid.hashCode()+ " is requesting a lock on page "+ pid.hashCode());
+				System.out.println("Txn: "+tid+ " is requesting a lock on page "+ pid);
                 // check if lock is available
     			//if the lock can be shared, this page may acquire the lock
     			Lock lock = getLockInfo(pid,perm);
@@ -44,7 +44,7 @@ public class LockManager {
     					makeNewTxn(tid);
     				}
     				lock.addTransaction(tid); 
-    				lockedPages.get(tid.hashCode()).add(pid);
+    				lockedPages.get(tid).add(pid);
     				return true;
     			}
     			
@@ -142,7 +142,7 @@ public class LockManager {
 			}
 		}
 		else { // have not used a lock on this object yet
-			lock = new Lock(pid.hashCode(),type);
+			lock = new Lock(pid,type);
 			lockTable.put(pageId,lock);
 		}
 		return lock;
