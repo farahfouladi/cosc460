@@ -25,7 +25,9 @@ public class Lock {
 	}
 	
 	public void addTransaction(TransactionId tid) {
-		this.lockedTxns.add(tid);
+		if (lockedTxns.indexOf(tid)==-1) { //txn is not already in list
+			this.lockedTxns.add(tid);
+		}
 	}
 	
 	public String getType() {
@@ -40,8 +42,21 @@ public class Lock {
 		return txnRequests;
 	}
 	public void addRequests(PageId pid) {
-		this.txnRequests.add(pid);
+		if (txnRequests.contains(pid)) {
+			this.txnRequests.add(pid);
+		}
 	}
+	
+    public void deleteTransaction(TransactionId tid) {
+    	if (lockedTxns.indexOf(tid)!=-1) {
+    		this.lockedTxns.remove(tid);
+    	}
+    }
+    public void deleteRequest(PageId pid) {
+    	if (txnRequests.contains(pid)) {
+    		this.txnRequests.remove(pid);
+    	}
+    }
 	
 	
 

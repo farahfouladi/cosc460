@@ -113,13 +113,19 @@ public class BufferPool {
      */
     public void releasePage(TransactionId tid, PageId pid) {
     	 Lock lock = lm.getLockTable().get(pid);
-         //Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
-         System.out.println("in release page, txn = " + tid+ " size = " + lock.getTransactions().size());
-         int i = lock.getTransactions().indexOf(tid);
-         lock.getTransactions().remove(i);
-         
+         lock.deleteTransaction(tid);
+         if (lm.getLockTable().containsKey(pid)) {
+        	 lm.getLockTable().remove(pid);
+         }
          int j = lm.getLockedPages().get(tid).indexOf(pid);
-         lm.getLockedPages().get(tid).remove(j);
+         if (j>=0) {
+        	 lm.getLockedPages().get(tid).remove(j);
+         }
+         int k = lm.getWaitingForPages().get(tid).indexOf(pid);
+         if (k>=0) {
+        	 lm.getWaitingForPages().get(tid).remove(k);
+         }
+         
          
          System.out.println("RELEASE: Transaction " + tid + " is releasing lock " + pid);
     }
@@ -151,11 +157,12 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid, boolean commit)
             throws IOException {
     	// if committing, then flush (write) all pages connected to this txn
+    	ArrayList<PageId> list = lm.getLockedPages().get(tid);
     	if (commit) {
     		flushPages(tid);
     	}
     	else {
-    		ArrayList<PageId> list = lm.getLockedPages().get(tid);
+    		//ArrayList<PageId> list = lm.getLockedPages().get(tid);
     		System.out.println("size of list = " + list.size());
     		for (PageId pgID : list) {
     			System.out.println("bpool size = " + bpool.size());
@@ -165,11 +172,12 @@ public class BufferPool {
     			pageAccessTime.remove(pgID);
     			//releasePage(tid, pgID);
     		}
-    		for (int i=0;i<list.size();i++) {
-    			PageId id = list.get(i);
-    			releasePage(tid, id);
-    		}
+
     	}
+		for (int i=0;i<list.size();i++) {
+			PageId id = list.get(i);
+			releasePage(tid, id);
+		}
     }
 
     /**
