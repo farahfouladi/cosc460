@@ -77,8 +77,22 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
+    	//timeout check -- woot!
+    	long startTime = System.currentTimeMillis();
         Page page = null;
-        lm.requestLock(pid, tid, perm);
+        boolean hasLock = lm.requestLock(pid, tid, perm);
+        //timeout check
+        while (!hasLock) {
+        	if ((System.currentTimeMillis() - startTime) > 100) {
+        		throw new TransactionAbortedException();
+        	} 
+        	try {
+        		Thread.sleep(10);
+        		hasLock = lm.requestLock(pid, tid, perm);
+        	} catch(InterruptedException e) {
+        		e.printStackTrace();
+        	}
+        }
         synchronized(this) { //make bufferpool update atomic 
         	if(bpool.containsKey(pid)){
         		page = bpool.get(pid);
