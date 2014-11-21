@@ -108,16 +108,16 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-    	 Lock lock = lm.getLockTable().get(pid.hashCode());
+    	 Lock lock = lm.getLockTable().get(pid);
          //Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
          
-         int i = lock.getTransactions().indexOf(tid.hashCode());
+         int i = lock.getTransactions().indexOf(tid);
          lock.getTransactions().remove(i);
          
-         int j = lm.getLockedPages().get(tid.hashCode()).indexOf(pid.hashCode());
-         lm.getLockedPages().get(tid.hashCode()).remove(j);
+         int j = lm.getLockedPages().get(tid).indexOf(pid);
+         lm.getLockedPages().get(tid).remove(j);
          
-         System.out.println("RELEASE: Transaction " + tid.hashCode() + " is releasing lock " + pid.hashCode());
+         System.out.println("RELEASE: Transaction " + tid + " is releasing lock " + pid);
     }
 
     /**
