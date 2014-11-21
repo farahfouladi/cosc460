@@ -91,7 +91,7 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
     	 try {
     		 PageId pid= page.getId();
-    		 HeapPageId hpid= (HeapPageId)pid;
+    		 //HeapPageId hpid= (HeapPageId)pid;
     		 RandomAccessFile file = new RandomAccessFile(f,"rw");
     		 int offset = pid.pageNumber()*BufferPool.getPageSize();
     		 byte[] b=new byte[BufferPool.getPageSize()];

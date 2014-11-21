@@ -145,8 +145,17 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
             throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+    	// if committing, then flush (write) all pages connected to this txn
+    	if (commit) {
+    		flushPages(tid);
+    	}
+    	else {
+    		for (PageId pgID : lm.getLockedPages().get(tid)) {
+    			bpool.get(pgID).markDirty(false, tid);
+    			bpool.remove(pgID);
+    			releasePage(tid, pgID);
+    		}
+    	}
     }
 
     /**
@@ -250,6 +259,7 @@ public class BufferPool {
     public synchronized void flushPages(TransactionId tid) throws IOException {
     	for (PageId pid : lm.getLockedPages().get(tid)) {
     		flushPage(pid);
+    		releasePage(tid, pid);
     	}
     }
 
