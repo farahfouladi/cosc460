@@ -89,24 +89,6 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        /*int pageNo = page.getId().pageNumber();
-        byte[] b = page.getPageData();
-        BufferedOutputStream bos;
-        int pageSize = BufferPool.getPageSize();
-        try {
-        	bos = new BufferedOutputStream(new FileOutputStream(f));
-        	System.out.println("write page: page number = "+pageNo);
-        	if (pageNo*pageSize + pageSize < f.length()) {
-        		bos.write(b, pageNo*pageSize, pageSize);
-        		bos.close();
-        	}
-        	else { // append to the end of the file
-        		
-        	}
-        } catch (Exception e) {
-        	System.out.println("error in write page");
-        	throw new IllegalArgumentException();
-        } */
     	 try {
     		 PageId pid= page.getId();
     		 HeapPageId hpid= (HeapPageId)pid;
@@ -136,37 +118,43 @@ public class HeapFile implements DbFile {
         return (int)Math.ceil(fileSize/(pageSize));
     }
 
+    
+    public Page findPage(TransactionId tid) throws DbException, IOException, TransactionAbortedException {
+    	boolean haveLockFlag = false;
+    	HeapPage page = null;
+    	
+    	for (int i = 0; i < numPages(); i++) {
+    		
+    		HeapPageId hpid = new HeapPageId(getId(), i);
+    		haveLockFlag = Database.getBufferPool().holdsLock(tid, hpid);
+    		page = (HeapPage) Database.getBufferPool().getPage(tid, hpid, Permissions.READ_ONLY);
+    		if (page.getNumEmptySlots() != 0) {
+    			return page;
+    		}
+    		else {
+    			if (!haveLockFlag) {
+    				Database.getBufferPool().releasePage(tid, hpid);
+    			}
+    		}
+    	}
+    	//exits for loop must mean that all pages in bpool are full -- create new page
+    	HeapPageId newHpid = new HeapPageId(getId(), numPages());
+		HeapPage newPg = new HeapPage(newHpid, HeapPage.createEmptyPageData());
+		writePage(newPg);
+		return newPg;
+    }
+    
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
     	ArrayList<Page> list = new ArrayList<Page>();
-    	int total_pages = numPages();
-    	int i;
-    	int id = getId();
-    	HeapPage pg;
-    	HeapPageId hpId;
-    	boolean flag = false;
-    	for (i=0;i<total_pages;i++) {
-    		hpId = new HeapPageId(id, i);
-    		synchronized(this) {
-    			pg = (HeapPage) Database.getBufferPool().getPage(tid,hpId,Permissions.READ_ONLY);
-    		}
-    		if (pg.getNumEmptySlots() != 0) { 
-    			pg.insertTuple(t);
-    			writePage(pg);
-    			list.add(pg);
-    			flag=true;
-    			break;
-    		}
-    	}
-    	if (flag==false) {
-    		hpId = new HeapPageId(getId(), numPages());
-    		HeapPage new_pg = new HeapPage(hpId, HeapPage.createEmptyPageData());
-    		new_pg.insertTuple(t);
-    		//writePage(new_pg);
-    		list.add(new_pg);
-    	}
-        return list;
+	    synchronized(this) {
+    		HeapPage pg = (HeapPage)findPage(tid);
+			pg.insertTuple(t);
+			pg.markDirty(true, tid);
+			list.add(pg);
+	    }
+		return list;
     }
 
     // see DbFile.java for javadocs
@@ -178,6 +166,7 @@ public class HeapFile implements DbFile {
         synchronized(this) {
         	pg = (HeapPage) Database.getBufferPool().getPage(tid,pid,Permissions.READ_ONLY);
         	pg.deleteTuple(t);
+        	pg.markDirty(true, tid);
         	list.add(pg);
         }
         return list;

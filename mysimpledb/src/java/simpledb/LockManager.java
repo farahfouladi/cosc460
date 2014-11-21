@@ -9,17 +9,17 @@ import java.util.*;
 
 public class LockManager {
 	// lock table
-	private HashMap<Integer, Lock> lockTable;
+	private HashMap<PageId, Lock> lockTable;  //pid to lock
 	// txn tables
-	private HashMap<Integer, ArrayList<Integer>> lockedPages;
-	private HashMap<Integer, ArrayList<Integer>> waitingForPages;
+	private HashMap<TransactionId, ArrayList<PageId>> lockedPages;  //tid to list of pids
+	private HashMap<TransactionId, ArrayList<PageId>> waitingForPages;  //tid to list of pids
 	
 	
 	
 	public LockManager() {
-		lockTable = new HashMap<Integer, Lock>();
-		lockedPages = new HashMap<Integer, ArrayList<Integer>>();
-		waitingForPages = new HashMap<Integer, ArrayList<Integer>>();
+		lockTable = new HashMap<PageId, Lock>();
+		lockedPages = new HashMap<TransactionId, ArrayList<PageId>>();
+		waitingForPages = new HashMap<TransactionId, ArrayList<PageId>>();
 	}
 
 	/**
@@ -41,15 +41,15 @@ public class LockManager {
     				System.out.println("the lock for this page is a shared lock!\n");
     				if (!lockedPages.containsKey(tid.hashCode())) {
     					//update tables to accommodate the new txn
-    					makeNewTxn(tid.hashCode());
+    					makeNewTxn(tid);
     				}
-    				lock.addTransaction(tid.hashCode()); 
-    				lockedPages.get(tid.hashCode()).add(pid.hashCode());
+    				lock.addTransaction(tid); 
+    				lockedPages.get(tid.hashCode()).add(pid);
     				return true;
     			}
     			
     			else if (lock.getType().equals("UPGRADE")) {
-    				if (lock.getTransactions().size() == 1 && lock.getTransactions().get(0)==tid.hashCode()){
+    				if (lock.getTransactions().size() == 1 && lock.getTransactions().get(0)==tid){
         				System.out.println("Can Upgrade to an Exclusive lock");
         				lock.setType("EXCLUSIVE");
         				return true;
@@ -60,7 +60,7 @@ public class LockManager {
     			}
     			
     			else if (lock.getType().equals("DOWNGRADE")) {
-    				if (lock.getTransactions().get(0)==tid.hashCode()){
+    				if (lock.getTransactions().get(0)==tid){
         				System.out.println("Can Downgrade to a Shared lock");
         				lock.setType("SHARED");
         				return true;
@@ -76,10 +76,10 @@ public class LockManager {
     				System.out.println("the lock for this page is exclusive and availabe");
     				if (!lockedPages.containsKey(tid.hashCode())) {
     					//update tables to accommodate the new txn
-    					makeNewTxn(tid.hashCode());
+    					makeNewTxn(tid);
     				}
-    				lock.addTransaction(tid.hashCode());
-    				lockedPages.get(tid.hashCode()).add(pid.hashCode());
+    				lock.addTransaction(tid);
+    				lockedPages.get(tid).add(pid);
     				return true;
     			}
     			// final case: exclusive lock, but another transaction has the lock for this page
@@ -88,10 +88,10 @@ public class LockManager {
     				System.out.println("the lock for this page is exclusive and taken!");
     				if (!lockedPages.containsKey(tid.hashCode())) {
     					//update tables to accommodate the new txn
-    					makeNewTxn(tid.hashCode());
+    					makeNewTxn(tid);
     				}
-    				lock.addRequests(pid.hashCode());
-    				waitingForPages.get(tid.hashCode()).add(pid.hashCode());
+    				lock.addRequests(pid);
+    				waitingForPages.get(tid).add(pid);
     			}
                 try {
                    Thread.sleep(1);
@@ -104,9 +104,9 @@ public class LockManager {
 
 
 	
-	public boolean holdsLock(int pid, int tid){
+	public boolean holdsLock(PageId pid, TransactionId tid){
         if (getLockedPages().containsKey(tid)) {
-        	ArrayList<Integer> locksList = getLockedPages().get(hashCode());
+        	ArrayList<PageId> locksList = getLockedPages().get(pid);
         	if (locksList.indexOf(pid) >= 0) { 
         		return true;
         	}
@@ -114,9 +114,9 @@ public class LockManager {
     	return false;
 	}
 	
-	public void makeNewTxn(int tid) {
-		ArrayList<Integer> arr1 = new ArrayList<Integer>();
-		ArrayList<Integer> arr2 = new ArrayList<Integer>();
+	public void makeNewTxn(TransactionId tid) {
+		ArrayList<PageId> arr1 = new ArrayList<PageId>();
+		ArrayList<PageId> arr2 = new ArrayList<PageId>();
 		lockedPages.put(tid,arr1);
 		waitingForPages.put(tid, arr2);
 	}
@@ -128,7 +128,7 @@ public class LockManager {
 			if (perm.toString() == "READ_ONLY") {type = "SHARED";}
 			if (perm.toString() == "READ_WRITE") {type = "EXCLUSIVE"; }
 		}
-		int pageId = pid.hashCode();
+		PageId pageId = pid;
 		if (lockTable.containsKey(pageId)) {
 			lock = lockTable.get(pageId);
 			// check if upgrading!
@@ -157,15 +157,15 @@ public class LockManager {
 		return false;
 	}
 	
-	public HashMap<Integer, Lock> getLockTable() {
+	public HashMap<PageId, Lock> getLockTable() {
 		return lockTable;
 	}
 
-	public HashMap<Integer, ArrayList<Integer>> getLockedPages() {
+	public HashMap<TransactionId, ArrayList<PageId>> getLockedPages() {
 		return lockedPages;
 	}
 
-	public HashMap<Integer, ArrayList<Integer>> getWaitingForPages() {
+	public HashMap<TransactionId, ArrayList<PageId>> getWaitingForPages() {
 		return waitingForPages;
 	}
 

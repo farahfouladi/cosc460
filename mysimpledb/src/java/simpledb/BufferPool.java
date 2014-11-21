@@ -126,15 +126,14 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+    	transactionComplete(tid, true);                                                         // cosc460
     }
 
     /**
      * Return true if the specified transaction has a lock on the specified page
      */
     public boolean holdsLock(TransactionId tid, PageId p) {                                                      
-    	return lm.holdsLock(p.hashCode(), tid.hashCode());
+    	return lm.holdsLock(p, tid);
     }
 
     /**
@@ -249,8 +248,9 @@ public class BufferPool {
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+    	for (PageId pid : lm.getLockedPages().get(tid)) {
+    		flushPage(pid);
+    	}
     }
 
     /**
