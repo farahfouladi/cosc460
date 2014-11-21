@@ -77,16 +77,20 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
+    	System.out.println("getting page " + pid + "and bpool size is " + bpool.size());
         Page page = null;
         lm.requestLock(pid, tid, perm);
         synchronized(this) { //make bufferpool update atomic 
         	if(bpool.containsKey(pid)){
+        		System.out.println("page is alreagy in BP");
         		page = bpool.get(pid);
         	}
         	else {
+        		System.out.println("need to read from disk");
         		int tableid = pid.getTableId();
         		page = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
         		if (bpool.size() >= numPages) {
+        			System.out.println("EVICTING A PAGE");
         			this.evictPage();
         		}
         		bpool.put(pid, page);
@@ -110,7 +114,7 @@ public class BufferPool {
     public void releasePage(TransactionId tid, PageId pid) {
     	 Lock lock = lm.getLockTable().get(pid);
          //Lock lock = lm.getLockInfo(pid, null); //shouldn't need permissions because already added
-         
+         System.out.println("in release page, txn = " + tid+ " size = " + lock.getTransactions().size());
          int i = lock.getTransactions().indexOf(tid);
          lock.getTransactions().remove(i);
          
@@ -119,6 +123,7 @@ public class BufferPool {
          
          System.out.println("RELEASE: Transaction " + tid + " is releasing lock " + pid);
     }
+   
 
     /**
      * Release all locks associated with a given transaction.
@@ -150,10 +155,19 @@ public class BufferPool {
     		flushPages(tid);
     	}
     	else {
-    		for (PageId pgID : lm.getLockedPages().get(tid)) {
+    		ArrayList<PageId> list = lm.getLockedPages().get(tid);
+    		System.out.println("size of list = " + list.size());
+    		for (PageId pgID : list) {
+    			System.out.println("bpool size = " + bpool.size());
+    			System.out.println("pageid? =" + pgID);
     			bpool.get(pgID).markDirty(false, tid);
     			bpool.remove(pgID);
-    			releasePage(tid, pgID);
+    			pageAccessTime.remove(pgID);
+    			//releasePage(tid, pgID);
+    		}
+    		for (int i=0;i<list.size();i++) {
+    			PageId id = list.get(i);
+    			releasePage(tid, id);
     		}
     	}
     }
@@ -257,9 +271,14 @@ public class BufferPool {
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-    	for (PageId pid : lm.getLockedPages().get(tid)) {
+    	ArrayList<PageId> list = lm.getLockedPages().get(tid);
+    	for (PageId pid : list) {
     		flushPage(pid);
-    		releasePage(tid, pid);
+    		//releasePage(tid, pid);
+    	}
+    	for (int i=0;i<list.size();i++) {
+    		PageId id = list.get(i);
+    		releasePage(tid, id);
     	}
     }
 
@@ -274,9 +293,10 @@ public class BufferPool {
 		long curr_time = System.currentTimeMillis();
 		Collection<PageId> allPages = pageAccessTime.keySet();
 		for(PageId pg : allPages) {
-			
 			long temp = (curr_time - pageAccessTime.get(pg));
-			if(temp > longestTime) {			// if we find an older page
+			System.out.println("pageid in evict = "+ pg);
+			Page page = bpool.get(pg);
+			if(temp > longestTime && page.isDirty()==null) {			// if we find an older page
 			    evicted = pg;					// set pid to be evicted
 			    longestTime = temp;
 			}
@@ -284,19 +304,18 @@ public class BufferPool {
 		if (evicted == null) {
 			throw new DbException("All pages are dirty.");
 		}
-		else try {
+		else 
 			//System.out.println("evicted null" + evicted);
 			//System.out.println("NULL??" + bpool.get(evicted));
         	//System.out.println("calling flushpage");
         	if (bpool.containsKey(evicted)) {
-	            flushPage(evicted);
+	            //flushPage(evicted);
 	            bpool.remove(evicted);
 	            pageAccessTime.remove(evicted);
         	}
-    } 
-        catch (IOException e) {
-            e.printStackTrace();
-        }   
+        //catch (IOException e) {
+        //    e.printStackTrace();
+        //}   
            
     }
 
