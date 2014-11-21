@@ -39,13 +39,14 @@ public class LockManager {
     			else if (lock.getType().equals("SHARED")) {
     				System.out.println("Number of locks on this page is " + lock.getTransactions().size());				
     				System.out.println("the lock for this page is a shared lock!\n");
-    				if (!lockedPages.containsKey(tid.hashCode())) {
+    				if (!lockedPages.containsKey(tid)) {
     					//update tables to accommodate the new txn
     					makeNewTxn(tid);
     				}
     				lock.addTransaction(tid);
     				waitedForLock(tid,pid);
     				lockedPages.get(tid).add(pid);
+    				System.out.println("SIZEEE????? " + lock.getTransactions().size());
     				return true;
     			}
     			
@@ -75,7 +76,7 @@ public class LockManager {
     			else if (lock.getType().equals("EXCLUSIVE") && lock.getTransactions().isEmpty() ) {
     				System.out.println("Number of locks on this page is " + lock.getTransactions().size());
     				System.out.println("the lock for this page is exclusive and availabe");
-    				if (!lockedPages.containsKey(tid.hashCode())) {
+    				if (!lockedPages.containsKey(tid)) {
     					//update tables to accommodate the new txn
     					makeNewTxn(tid);
     				}
@@ -88,7 +89,7 @@ public class LockManager {
     			else {
     				System.out.println("Number of locks on this page is " + lock.getTransactions().size());				
     				System.out.println("the lock for this page is exclusive and taken!");
-    				if (!lockedPages.containsKey(tid.hashCode())) {
+    				if (!lockedPages.containsKey(tid)) {
     					//update tables to accommodate the new txn
     					makeNewTxn(tid);
     				}
@@ -115,7 +116,7 @@ public class LockManager {
 	
 	public boolean holdsLock(PageId pid, TransactionId tid){
         if (getLockedPages().containsKey(tid)) {
-        	ArrayList<PageId> locksList = getLockedPages().get(pid);
+        	ArrayList<PageId> locksList = getLockedPages().get(tid);
         	if (locksList.indexOf(pid) >= 0) { 
         		return true;
         	}
@@ -142,7 +143,6 @@ public class LockManager {
 			lock = lockTable.get(pageId);
 			// check if upgrading!
 			if (lock.getType().equals("SHARED") && type.equals("EXCLUSIVE")){
-				System.out.println("or here?");
 					lock.setType("UPGRADE");
 			}
 			if (lock.getType().equals("EXCLUSIVE") && type.equals("SHARED")){
