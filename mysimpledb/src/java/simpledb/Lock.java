@@ -4,19 +4,19 @@ import java.util.*;
 
 public class Lock {
 	
-	private int id;
+	private PageId id;
 	private ArrayList<TransactionId> lockedTxns;
 	private String type; //should probably makes these constants?
 	private Queue<PageId> txnRequests;
 	
-	public Lock(int id, String type) {
+	public Lock(PageId id, String type) {
 		this.id = id;
 		this.type = type;
 		lockedTxns = new ArrayList<TransactionId>();
 		txnRequests = new LinkedList<PageId>();
 	}
 	
-	public int getId() {
+	public PageId getId() {
 		return id;
 	}
 	
