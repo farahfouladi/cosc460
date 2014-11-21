@@ -5,26 +5,26 @@ import java.util.*;
 public class Lock {
 	
 	private int id;
-	private ArrayList<Integer> lockedTxns;
+	private ArrayList<TransactionId> lockedTxns;
 	private String type; //should probably makes these constants?
-	private Queue<Integer> txnRequests;
+	private Queue<PageId> txnRequests;
 	
 	public Lock(int id, String type) {
 		this.id = id;
 		this.type = type;
-		lockedTxns = new ArrayList<Integer>();
-		txnRequests = new LinkedList<Integer>();
+		lockedTxns = new ArrayList<TransactionId>();
+		txnRequests = new LinkedList<PageId>();
 	}
 	
 	public int getId() {
 		return id;
 	}
 	
-	public ArrayList<Integer> getTransactions() {
+	public ArrayList<TransactionId> getTransactions() {
 		return lockedTxns;
 	}
 	
-	public void addTransaction(int tid) {
+	public void addTransaction(TransactionId tid) {
 		this.lockedTxns.add(tid);
 	}
 	
@@ -36,10 +36,10 @@ public class Lock {
 		this.type = type;
 	}
 
-	public Queue<Integer> getRequests() {
+	public Queue<PageId> getRequests() {
 		return txnRequests;
 	}
-	public void addRequests(int pid) {
+	public void addRequests(PageId pid) {
 		this.txnRequests.add(pid);
 	}
 	
