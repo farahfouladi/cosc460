@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 
+
+import simpledb.TupleDesc.TDItem;
+
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
  * specified schema specified by a TupleDesc object and contain Field objects
@@ -23,10 +26,26 @@ public class Tuple implements Serializable {
      *           instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-    	if (td.numFields() > 0) {
-    		this.desc = td;
-    		fields = new Field[td.numFields()];
-    	}
+    	System.out.println("**********ITS THE RECORD ID" + rId);
+    	this.desc = td;
+        this.fields = new Field[td.numFields()];
+        Iterator<TDItem> it = td.iterator();
+        int i = 0;
+        while (it.hasNext()){
+        	if (td.getFieldType(i).equals(Type.INT_TYPE)){
+        		fields[i] = new IntField(-1);
+        	}
+        	else {
+        		fields[i] = new StringField(null, td.getFieldType(i).getLen());
+        	}
+        	i++;
+        	it.next();
+        }
+    
+//    	if (td.numFields() > 0) {
+//    		this.desc = td;
+//    		fields = new Field[td.numFields()];
+//    	}
     }
 
     /**
