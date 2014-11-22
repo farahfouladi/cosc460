@@ -26,18 +26,29 @@ public class LockManager {
 	 * Finds out if a lock is available
 	 * @param pid
 	 * @return true if lock is available, false if unavailable
+	 * @throws TransactionAbortedException 
 	 */
-	public boolean requestLock(PageId pid, TransactionId tid, Permissions perm) {
+	public boolean requestLock(PageId pid, TransactionId tid, Permissions perm) throws TransactionAbortedException {
         boolean waiting = true;
+        long startTime = System.currentTimeMillis();
 		while (waiting) {
+			if (System.currentTimeMillis() - startTime > 100) {
+				throw new TransactionAbortedException();
+			}
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			synchronized(this) {
-				System.out.println("Txn: "+tid+ " is requesting a lock on page "+ pid);
+
                 // check if lock is available
     			//if the lock can be shared, this page may acquire the lock
     			Lock lock = getLockInfo(pid,perm);
+				System.out.println("Txn: "+tid+ " is requesting a " + lock.getType() +" lock on page "+ pid);
     			if (lock==null) {}
     			else if (lock.getType().equals("SHARED")) {
-    				System.out.println("Number of locks on this page is " + lock.getTransactions().size());				
+    				//System.out.println("Number of locks on this page is " + lock.getTransactions().size());				
     				System.out.println("the lock for this page is a shared lock!\n");
     				if (!lockedPages.containsKey(tid)) {
     					//update tables to accommodate the new txn
@@ -46,7 +57,7 @@ public class LockManager {
     				lock.addTransaction(tid);
     				waitedForLock(tid,pid);
     				lockedPages.get(tid).add(pid);
-    				System.out.println("SIZEEE????? " + lock.getTransactions().size());
+    				//System.out.println("SIZEEE????? " + lock.getTransactions().size());
     				return true;
     			}
     			
@@ -73,8 +84,8 @@ public class LockManager {
     			}
     			
     			//if the lock is exclusive but no one else is holding the lock, this page may acquire the lock
-    			else if (lock.getType().equals("EXCLUSIVE") && lock.getTransactions().isEmpty() ) {
-    				System.out.println("Number of locks on this page is " + lock.getTransactions().size());
+    			else if (lock.getType().equals("EXCLUSIVE") && isXAvailable(lock,tid) ) {
+    				//System.out.println("Number of locks on this page is " + lock.getTransactions().size());
     				System.out.println("the lock for this page is exclusive and availabe");
     				if (!lockedPages.containsKey(tid)) {
     					//update tables to accommodate the new txn
@@ -104,6 +115,17 @@ public class LockManager {
 		return false;
    }
 		
+	//checks if exclusive lock is availabe
+	private boolean isXAvailable(Lock lock, TransactionId tid) {
+		System.out.println("checking X availability size = " + lock.getTransactions().size());
+		if (lock.getTransactions().isEmpty()) {
+			return true;
+		}
+		if (lock.getTransactions().size()==1 && lock.getTransactions().get(0)==tid) {
+			return true;
+		}
+		return false;
+	}
 
 	private void waitedForLock(TransactionId tid, PageId pid) {
 		for (PageId pageid : waitingForPages.get(tid)) {
