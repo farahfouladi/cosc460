@@ -26,7 +26,7 @@ After you complete lab 5, please answer the following questions.
 
 5. Roughly how long did you spend working on this lab?
 
-	Between 12 and 16 hours.
+	Between 20 and 30 hours.  Most of it debugging to get the tests to past.
 
 6. Describe your lock manager implementation.  Here are some specific questions to answer:
 
