@@ -224,12 +224,14 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
+    	System.out.println("THIS IS THE TUPLE RECORD ID: " + t.getRecordId());
     	int tableId = t.getRecordId().getPageId().getTableId();
     	DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
     	HeapFile hf = (HeapFile)dbFile;
     	ArrayList<Page> pgs = hf.deleteTuple(tid, t);
   		for (Page page : pgs) {
 			 page.markDirty(true,tid);
+			 bpool.put(page.getId(), page);
 		 }
     }
 
@@ -268,9 +270,11 @@ public class BufferPool {
     	}
     	//System.out.println("This is a page: " + bpool.get(pid));
     	Page pagetoFlush = bpool.get(pid);
-    	if (pagetoFlush.isDirty() != null) {
+    	if (pagetoFlush != null) {
 	    	Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(pagetoFlush);
-	    	pagetoFlush.markDirty(false, pagetoFlush.isDirty());
+	    	TransactionId tid = new TransactionId();
+	    	pagetoFlush.markDirty(false, tid);
+	    	bpool.put(pid, pagetoFlush);
     	}
    
     }
