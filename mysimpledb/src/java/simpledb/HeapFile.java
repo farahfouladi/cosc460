@@ -121,6 +121,7 @@ public class HeapFile implements DbFile {
 
     
     public PageId findPage(TransactionId tid) throws DbException, IOException, TransactionAbortedException {
+    	System.out.println("findpage");
     	boolean haveLockFlag = false;
     	HeapPage page = null;
     	
@@ -134,6 +135,7 @@ public class HeapFile implements DbFile {
     		}
     		else {
     			if (!haveLockFlag) {
+    				System.out.println("this one???");
     				Database.getBufferPool().releasePage(tid, hpid);
     			}
     		}
@@ -279,6 +281,7 @@ public class HeapFile implements DbFile {
                //go to next pg
             	//System.out.println("###### getting next page");
             	HeapPageId hpid = new HeapPageId(getId(),pgNo);
+            	System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!1");
                 Database.getBufferPool().releasePage(tid, hpid);
             	pgNo += 1;
                 tuples = getTupsNextPage(pgNo);

@@ -184,9 +184,6 @@ public class LockManager {
 	 * @param pid
 	 * @return true if object successfully releases locks, if not false
 	 */
-	public boolean releaseLock(int pid){
-		return false;
-	}
 	
 	public HashMap<PageId, Lock> getLockTable() {
 		return lockTable;
