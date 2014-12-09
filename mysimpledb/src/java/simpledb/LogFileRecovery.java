@@ -92,10 +92,49 @@ class LogFileRecovery {
      * @param tidToRollback The transaction to rollback
      * @throws java.io.IOException if tidToRollback has already committed
      */
-    public void rollback(TransactionId tidToRollback) throws IOException {
-        readOnlyLog.seek(readOnlyLog.length()); // undoing so move to end of logfile
+    public void rollback(TransactionId tidToRollback) throws IOException {	
+    	long offset = readOnlyLog.length() - LogFile.LONG_SIZE;
+        readOnlyLog.seek(offset); 
+        while (offset > 0){
+        	long start = readOnlyLog.readLong();
+        	readOnlyLog.seek(start);
+        	int type = readOnlyLog.readInt();
+        	long tid = readOnlyLog.readLong();
+        	
+        	if (type == LogType.BEGIN_RECORD) {
+        		//nothing...
+        		break;
+        	}
+        	
+        	if (type == LogType.COMMIT_RECORD && tid == tidToRollback.getId()){
+        		throw new IOException("Transaction committed");
+        	}
+        	
+        	if (type == LogType.ABORT_RECORD) {
+        		throw new IOException("Transaction aborted.");
+        	}
+        	
+        	if (type == LogType.UPDATE_RECORD && tid == tidToRollback.getId()){
+        		Page before = LogFile.readPageData(readOnlyLog);
+        		Page after = LogFile.readPageData(readOnlyLog);
+    			HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(before.getId().getTableId());
+    			file.writePage(before);
+    			Database.getBufferPool().discardPage(before.getId());
+    			Database.getLogFile().logCLR(tid, after);
+        	}
+        	
+        	if (type == LogType.CLR_RECORD) {
+        		break;
+        	}
+        	
+        	if (type == LogType.CHECKPOINT_RECORD) {
+        		//ummm...
+        		break;
+        	}
 
-        // some code goes here
+        	offset = start - LogFile.LONG_SIZE;
+        	readOnlyLog.seek(offset);
+        }
     }
 
     /**
