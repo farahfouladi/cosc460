@@ -158,13 +158,22 @@ public class BufferPool {
             throws IOException {
     	// if committing, then flush (write) all pages connected to this txn
     	ArrayList<PageId> list = lm.getLockedPages().get(tid);
+    	System.out.println("COMMIT????? "+ commit);
     	if (commit) {
     		flushPages(tid);
+    		
+    		for (PageId pgId : list) {
+    			System.out.println("committing... setting before image for page " + bpool.get(pgId));
+    			// use current page contents as the before-image
+    	        // for the next transaction that modifies this page.
+    	        bpool.get(pgId).setBeforeImage();
+    		}
     	}
     	else {
     		//ArrayList<PageId> list = lm.getLockedPages().get(tid);
     		System.out.println("size of list = " + list.size());
     		for (PageId pgID : list) {
+    			
     			System.out.println("bpool size = " + bpool.size());
     			System.out.println("pageid? =" + pgID);
     			bpool.get(pgID).markDirty(false, tid);
@@ -271,6 +280,13 @@ public class BufferPool {
     	//System.out.println("This is a page: " + bpool.get(pid));
     	Page pagetoFlush = bpool.get(pid);
     	if (pagetoFlush != null) {
+    		// append an update record to the log, with 
+            // a before-image and after-image.
+            TransactionId dirtier = pagetoFlush.isDirty();
+            if (dirtier != null){
+              Database.getLogFile().logWrite(dirtier, pagetoFlush.getBeforeImage(), pagetoFlush);
+              Database.getLogFile().force();
+            }
 	    	Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(pagetoFlush);
 	    	TransactionId tid = new TransactionId();
 	    	pagetoFlush.markDirty(false, tid);

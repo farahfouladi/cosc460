@@ -95,6 +95,7 @@ public class HeapPage implements Page, Iterable<Tuple> {
      * -- used by recovery
      */
     public HeapPage getBeforeImage() {
+    	System.out.println("heappage is " + this);
         try {
             byte[] oldDataRef = null;
             synchronized (oldDataLock) {
