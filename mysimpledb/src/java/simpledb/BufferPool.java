@@ -268,8 +268,9 @@ public class BufferPool {
      * cache.
      */
     public synchronized void discardPage(PageId pid) {
-        // some code goes here
-        // only necessary for lab6                                                                            // cosc460
+    	if (bpool.contains(pid)){
+    		bpool.remove(pid);
+    	}                                                                           // cosc460
     }
 
     /**
