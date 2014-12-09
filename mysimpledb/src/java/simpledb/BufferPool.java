@@ -112,6 +112,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
+    	System.out.println("RELEASING PAGE!!!!!!!" + pid);
     	 Lock lock = lm.getLockTable().get(pid);
          lock.deleteTransaction(tid);
          if (lm.getLockTable().containsKey(pid)) {
@@ -125,7 +126,6 @@ public class BufferPool {
          if (k>=0) {
         	 lm.getWaitingForPages().get(tid).remove(k);
          }
-         
          
          System.out.println("RELEASE: Transaction " + tid + " is releasing lock " + pid);
     }
@@ -160,14 +160,17 @@ public class BufferPool {
     	ArrayList<PageId> list = lm.getLockedPages().get(tid);
     	System.out.println("COMMIT????? "+ commit);
     	if (commit) {
-    		flushPages(tid);
-    		
+    		System.out.println("flushed pages LIST SIZE = " + list.size());
     		for (PageId pgId : list) {
     			System.out.println("committing... setting before image for page " + bpool.get(pgId));
     			// use current page contents as the before-image
     	        // for the next transaction that modifies this page.
-    	        bpool.get(pgId).setBeforeImage();
+    	        Page p = bpool.get(pgId);
+    	        p.setBeforeImage();
     		}
+    		System.out.println("in if commit");
+    		flushPages(tid);
+    		
     	}
     	else {
     		//ArrayList<PageId> list = lm.getLockedPages().get(tid);
@@ -185,8 +188,10 @@ public class BufferPool {
     	}
 		for (int i=0;i<list.size();i++) {
 			PageId id = list.get(i);
+			System.out.println("here??!!!?!?!?!?!");
 			releasePage(tid, id);
 		}
+
     }
 
     /**
@@ -273,6 +278,7 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
+    	System.out.println("FLUSH PAGE");
     	// only call this on dirty page to evict
     	if (pid == null) {
     		throw new NullPointerException();
@@ -299,6 +305,7 @@ public class BufferPool {
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
+    	System.out.println("flushing pages!!!");
     	ArrayList<PageId> list = lm.getLockedPages().get(tid);
     	for (PageId pid : list) {
     		flushPage(pid);
@@ -306,7 +313,7 @@ public class BufferPool {
     	}
     	for (int i=0;i<list.size();i++) {
     		PageId id = list.get(i);
-    		releasePage(tid, id);
+    		//releasePage(tid, id);
     	}
     }
 
