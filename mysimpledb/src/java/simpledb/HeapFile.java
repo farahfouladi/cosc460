@@ -89,7 +89,7 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-    	System.out.println("!!!!!!!!!! ABOUT TO WRITE PAGE !!!!!!!!");
+    	System.out.println("!!!!!!!!!! ABOUT TO WRITE PAGE " + page);
     	 try {
     		 PageId pid= page.getId();
     		 HeapPageId hpid= (HeapPageId)pid;

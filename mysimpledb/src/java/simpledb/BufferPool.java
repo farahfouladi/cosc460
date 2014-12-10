@@ -114,6 +114,7 @@ public class BufferPool {
     public void releasePage(TransactionId tid, PageId pid) {
     	System.out.println("RELEASING PAGE!!!!!!!" + pid);
     	 Lock lock = lm.getLockTable().get(pid);
+    	 if (lock==null) {return;}
          lock.deleteTransaction(tid);
          if (lm.getLockTable().containsKey(pid)) {
         	 lm.getLockTable().remove(pid);
@@ -178,8 +179,8 @@ public class BufferPool {
     		System.out.println("size of list = " + list.size());
     		for (PageId pgID : list) {
     			
-    			System.out.println("bpool size = " + bpool.size());
-    			System.out.println("pageid? =" + pgID);
+    			//System.out.println("bpool size = " + bpool.size());
+    			//System.out.println("pageid? =" + pgID);
     			bpool.get(pgID).markDirty(false, tid);
     			bpool.remove(pgID);
     			pageAccessTime.remove(pgID);
