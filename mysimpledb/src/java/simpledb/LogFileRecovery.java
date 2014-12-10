@@ -93,16 +93,20 @@ class LogFileRecovery {
      * @throws java.io.IOException if tidToRollback has already committed
      */
     public void rollback(TransactionId tidToRollback) throws IOException {	
+    	print();
     	long offset = readOnlyLog.length() - LogFile.LONG_SIZE;
         readOnlyLog.seek(offset); 
         while (offset > 0){
+        	System.out.println("Roll back offset = " + offset);
         	long start = readOnlyLog.readLong();
         	readOnlyLog.seek(start);
         	int type = readOnlyLog.readInt();
+        	System.out.println("Rollback type = " + type);
         	long tid = readOnlyLog.readLong();
+        	System.out.println("Rollback tid = " + tid);
         	
         	if (type == LogType.BEGIN_RECORD) {
-        		//nothing...
+        		System.out.println("Log Begin");
         		break;
         	}
         	
@@ -115,8 +119,11 @@ class LogFileRecovery {
         	}
         	
         	if (type == LogType.UPDATE_RECORD && tid == tidToRollback.getId()){
+        		System.out.println("Log UPDATE");
         		Page before = LogFile.readPageData(readOnlyLog);
+        		System.out.println("page before (write) = " + before.getId());
         		Page after = LogFile.readPageData(readOnlyLog);
+        		System.out.println("page after = " + after.getId());
     			HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(before.getId().getTableId());
     			file.writePage(before);
     			Database.getBufferPool().discardPage(before.getId());

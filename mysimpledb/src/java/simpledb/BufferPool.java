@@ -158,6 +158,7 @@ public class BufferPool {
             throws IOException {
     	// if committing, then flush (write) all pages connected to this txn
     	ArrayList<PageId> list = lm.getLockedPages().get(tid);
+    	if (list==null) {return;}
     	System.out.println("COMMIT????? "+ commit);
     	if (commit) {
     		System.out.println("flushed pages LIST SIZE = " + list.size());
@@ -308,6 +309,7 @@ public class BufferPool {
     public synchronized void flushPages(TransactionId tid) throws IOException {
     	System.out.println("flushing pages!!!");
     	ArrayList<PageId> list = lm.getLockedPages().get(tid);
+    	if (list==null) {return;}
     	for (PageId pid : list) {
     		flushPage(pid);
     		//releasePage(tid, pid);
