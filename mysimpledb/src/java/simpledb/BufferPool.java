@@ -168,6 +168,7 @@ public class BufferPool {
     			// use current page contents as the before-image
     	        // for the next transaction that modifies this page.
     	        Page p = bpool.get(pgId);
+    	        System.out.println("Setting before image in BP" + p);
     	        p.setBeforeImage();
     		}
     		System.out.println("in if commit");
@@ -181,9 +182,11 @@ public class BufferPool {
     			
     			//System.out.println("bpool size = " + bpool.size());
     			//System.out.println("pageid? =" + pgID);
-    			bpool.get(pgID).markDirty(false, tid);
-    			bpool.remove(pgID);
-    			pageAccessTime.remove(pgID);
+    			if (bpool.keySet().contains(pgID)) {
+    				bpool.get(pgID).markDirty(false, tid);
+    				bpool.remove(pgID);
+    				pageAccessTime.remove(pgID);
+    			}
     			//releasePage(tid, pgID);
     		}
 
@@ -270,8 +273,13 @@ public class BufferPool {
      * cache.
      */
     public synchronized void discardPage(PageId pid) {
-    	if (bpool.contains(pid)){
+    	System.out.println("discarding page bpool size = " + bpool.size());
+    	System.out.println("first thing in bufferpool = " + bpool.keySet().toArray()[0]);
+    	if (bpool.keySet().contains(pid)){
+    		System.out.println("removing " + pid + "from bpool");
+    		System.out.println("size = " + bpool.size());
     		bpool.remove(pid);
+    		System.out.println("size = " + bpool.size());
     	}                                                                           // cosc460
     }
 
@@ -281,7 +289,7 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-    	System.out.println("FLUSH PAGE");
+    	System.out.println("FLUSH PAGE where pid is" + pid);
     	// only call this on dirty page to evict
     	if (pid == null) {
     		throw new NullPointerException();

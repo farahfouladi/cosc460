@@ -79,7 +79,8 @@ public class HeapFile implements DbFile {
 	    fis.close();
 	    HeapPageId hpid = ((HeapPageId) pid);
 	    //System.out.println("pid in read page method is " + hpid.hashCode());
-	    pg = new HeapPage(hpid,b);  
+	    System.out.println("read the page from file");
+	    pg = new HeapPage(hpid,b); 
 		} catch (Exception e) {
 			System.out.println("error in read page");
 			throw new IllegalArgumentException();
@@ -97,6 +98,7 @@ public class HeapFile implements DbFile {
     		 int offset = pid.pageNumber()*BufferPool.getPageSize();
     		 byte[] b=new byte[BufferPool.getPageSize()];
     		 b=page.getPageData();
+    		 System.out.println(Arrays.toString(b));
     		 file.seek(offset);
     		 file.write(b, 0, BufferPool.getPageSize());
     		 file.close();

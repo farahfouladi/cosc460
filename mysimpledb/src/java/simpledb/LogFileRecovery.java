@@ -126,6 +126,7 @@ class LogFileRecovery {
         		System.out.println("page after = " + after.getId());
     			HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(before.getId().getTableId());
     			file.writePage(before);
+    			System.out.println("discarding page = " + before.getId());
     			Database.getBufferPool().discardPage(before.getId());
     			Database.getLogFile().logCLR(tid, after);
         	}
