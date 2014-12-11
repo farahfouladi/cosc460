@@ -121,7 +121,7 @@ public class TableStats {
 			}
 			//Now, we can initialize the histograms			
 			iter.rewind();
-			//while (iter.hasNext()) {
+			while (iter.hasNext()) {
 				Tuple t = iter.next();
 				for (int ii=0;ii<num_fields;ii++) {
 					Field fi = t.getField(ii);
@@ -135,7 +135,7 @@ public class TableStats {
 						default: break;
 					}
 				}
-			//}
+			}
 			
 			//Finally, we can add values to the histograms
 			iter.rewind();

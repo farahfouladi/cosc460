@@ -64,6 +64,8 @@ public class HeapPage implements Page, Iterable<Tuple> {
         }
         dis.close();
 
+        System.out.println("Made a new instance of a page");
+        System.out.println(Arrays.toString(data));
         setBeforeImage();
     }
 
@@ -95,12 +97,12 @@ public class HeapPage implements Page, Iterable<Tuple> {
      * -- used by recovery
      */
     public HeapPage getBeforeImage() {
-    	System.out.println("heappage is " + this);
         try {
             byte[] oldDataRef = null;
             synchronized (oldDataLock) {
                 oldDataRef = oldData;
             }
+            System.out.println("getting before image " + oldDataRef);
             return new HeapPage(pid, oldDataRef);
         } catch (IOException e) {
             e.printStackTrace();
