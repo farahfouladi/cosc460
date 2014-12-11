@@ -167,9 +167,10 @@ public class BufferPool {
     			System.out.println("committing... setting before image for page " + bpool.get(pgId));
     			// use current page contents as the before-image
     	        // for the next transaction that modifies this page.
-    	        Page p = bpool.get(pgId);
-    	        System.out.println("Setting before image in BP" + p);
-    	        p.setBeforeImage();
+    			if (bpool.keySet().contains(pgId)) {
+    				Page p = bpool.get(pgId);
+    				p.setBeforeImage();
+    			}
     		}
     		System.out.println("in if commit");
     		flushPages(tid);
