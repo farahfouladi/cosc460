@@ -1,7 +1,10 @@
 package simpledb;
 
+import java.io.EOFException;
 import java.io.IOException;
+
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -154,8 +157,81 @@ class LogFileRecovery {
      * the BufferPool are locked.
      */
     public void recover() throws IOException {
+    	readOnlyLog.seek(0);
+    	ArrayList<Long> losers = new ArrayList<Long>();
+    	Long pos = readOnlyLog.readLong();
+    	
+    	if (pos != -1) {
+    		readOnlyLog.seek(pos);
+    		readOnlyLog.readInt();
+    		readOnlyLog.readLong();
+    		int numTxns = readOnlyLog.readInt();
+    		for (int i = 0; i < numTxns; i++) {
+    			losers.add(readOnlyLog.readLong());
+    		}
+    		readOnlyLog.readLong();    		
+    	}
+    	else {
+    		//seek to where? beginning bc no chkpts?
+    		readOnlyLog.seek(0); 
+    		readOnlyLog.readInt();
+    		readOnlyLog.readLong();
+    	}
+    	
+    	while (readOnlyLog.getFilePointer() < readOnlyLog.length()) {
+    		int type = readOnlyLog.readInt();
+    		long tid = readOnlyLog.readLong();
+    		
+    		//type cases!
+    		if (type == LogType.BEGIN_RECORD) {
+    			losers.add(tid);
+    		}
+			if (type == LogType.COMMIT_RECORD) {
+			    losers.remove(tid);
+			}
+			if (type == LogType.ABORT_RECORD) {
+				losers.remove(tid);
+			}
+			if (type == LogType.UPDATE_RECORD) {
+				Page before = LogFile.readPageData(readOnlyLog);
+				Page after = LogFile.readPageData(readOnlyLog);
+				HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(before.getId().getTableId());
+				file.writePage(after);
+			}
+			if (type == LogType.CLR_RECORD) {
+				Page before = LogFile.readPageData(readOnlyLog);
+				HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(before.getId().getTableId());
+				file.writePage(before);
+			}
+			readOnlyLog.readLong();
+    	} //end while
+    	
+    	//undoing part 
+    	readOnlyLog.seek(readOnlyLog.length());
+    	pos = readOnlyLog.length();
+        while (losers.size() > 0){
+        	pos = pos - LogFile.LONG_SIZE;
+        	readOnlyLog.seek(pos);
+        	pos = readOnlyLog.readLong();
+        	readOnlyLog.seek(pos);
+        	int type = readOnlyLog.readInt();
+        	long tid = readOnlyLog.readLong();
+        	
+        	if (type == LogType.BEGIN_RECORD){
+        		if (losers.contains(tid)){
+        			losers.remove(tid);
+        			Database.getLogFile().logAbort(tid);
+        		}
+        	}
+        	if (type == LogType.UPDATE_RECORD){
+        		if (losers.contains(tid)) {
+        			Page before = Database.getLogFile().readPageData(readOnlyLog);
+    				HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(before.getId().getTableId());
+    				file.writePage(before);
+    				Database.getLogFile().logCLR(tid, before);
+        		}
+        	}
 
-        // some code goes here
-
+        }
     }
 }
